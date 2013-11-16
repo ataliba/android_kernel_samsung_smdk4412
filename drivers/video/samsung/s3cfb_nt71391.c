@@ -28,21 +28,28 @@
 #include "s3cfb.h"
 #include "s5p-dsim.h"
 
+<<<<<<< HEAD
 #define NT71391_CHANGE_MINI_LVDS_FREQ_MIPI 1
 
+=======
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 #define POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
 
 struct lcd_info {
 	struct device			*dev;
 	unsigned int			ldi_enable;
 	unsigned int			power;
+<<<<<<< HEAD
 	unsigned int			connected;
 	struct mutex			lock;
+=======
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 	struct lcd_device		*ld;
 	struct lcd_platform_data	*lcd_pd;
 	struct dsim_global		*dsim;
 };
 
+<<<<<<< HEAD
 #ifdef NT71391_CHANGE_MINI_LVDS_FREQ_MIPI
 
 #define NT71391_TCON_REG_ADD		0xAC
@@ -168,6 +175,8 @@ read_retry:
 	return ret;
 }
 #endif
+=======
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 static ssize_t lcdtype_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	char temp[15];
@@ -178,6 +187,7 @@ static ssize_t lcdtype_show(struct device *dev, struct device_attribute *attr, c
 
 static DEVICE_ATTR(lcd_type, 0664,
 	lcdtype_show, NULL);
+<<<<<<< HEAD
 
 static ssize_t window_type_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
@@ -200,10 +210,16 @@ static int nt71391_power_on(struct lcd_info *lcd)
 	int ret = 0;
 	struct lcd_platform_data *pd = NULL;
 	pd = lcd->lcd_pd;
+=======
+static int nt71391_power_on(struct lcd_info *lcd)
+{
+	int ret = 0;
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 
 	dev_info(&lcd->ld->dev, "%s\n", __func__);
 
 	msleep(120); /* power on 50ms, i2c 70ms */
+<<<<<<< HEAD
 	nt71391_write(lcd, NT71391_UNLOCK_PAGE0, NT71391_WRITE);
 	nt71391_write(lcd, NT71391_FREQ_SETTING, NT71391_WRITE);
 	nt71391_write(lcd, NULL, NT71391_LOCK_CMD2);
@@ -221,6 +237,10 @@ static int nt71391_power_on(struct lcd_info *lcd)
 
 	lcd->dsim->ops->cmd_write(lcd->dsim, TURN_ON, 0, 0);
 #endif
+=======
+
+	lcd->dsim->ops->cmd_write(lcd->dsim, TURN_ON, 0, 0);
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 
 	lcd->ldi_enable = 1;
 
@@ -341,11 +361,17 @@ static int __init nt71391_probe(struct device *dev)
 	}
 
 	lcd->dev = dev;
+<<<<<<< HEAD
 	lcd->connected = 1;
 	lcd->dsim = (struct dsim_global *)dev_get_drvdata(dev->parent);
 	lcd->power = FB_BLANK_UNBLANK;
 
 	mutex_init(&lcd->lock);
+=======
+	lcd->dsim = (struct dsim_global *)dev_get_drvdata(dev->parent);
+	lcd->power = FB_BLANK_UNBLANK;
+
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 
 	dev_set_drvdata(dev, lcd);
 
@@ -355,15 +381,21 @@ static int __init nt71391_probe(struct device *dev)
 	lcd_early_suspend = nt71391_early_suspend;
 	lcd_late_resume = nt71391_late_resume;
 #endif
+<<<<<<< HEAD
 
+=======
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 	ret = device_create_file(&lcd->ld->dev, &dev_attr_lcd_type);
 	if (ret < 0)
 		dev_err(&lcd->ld->dev, "failed to add sysfs entries\n");
 
+<<<<<<< HEAD
 	ret = device_create_file(&lcd->ld->dev, &dev_attr_window_type);
 	if (ret < 0)
 		dev_err(&lcd->ld->dev, "failed to add window_type entries\n");
 
+=======
+>>>>>>> 67fbd24... s3cfb: i9300 update12
 	return  0;
 
 out_free_lcd:
