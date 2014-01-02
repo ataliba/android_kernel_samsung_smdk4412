@@ -738,6 +738,20 @@ static int audio_pcm_playback_trigger(struct snd_pcm_substream *substream,
 	return ret;
 }
 
+static struct audio_dev _audio_dev = {
+	.func = {
+		.name = "audio_source",
+		.bind = audio_bind,
+		.unbind = audio_unbind,
+		.set_alt = audio_set_alt,
+		.setup = audio_setup,
+		.disable = audio_disable,
+	},
+	.in_desc = &fs_as_in_ep_desc,
+	.lock = __SPIN_LOCK_UNLOCKED(_audio_dev.lock),
+	.idle_reqs = LIST_HEAD_INIT(_audio_dev.idle_reqs),
+};
+
 static struct snd_pcm_ops audio_playback_ops = {
 	.open		= audio_pcm_open,
 	.close		= audio_pcm_close,
