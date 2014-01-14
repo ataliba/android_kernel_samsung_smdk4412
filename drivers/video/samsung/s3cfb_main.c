@@ -42,13 +42,8 @@
 #endif
 
 #ifdef CONFIG_FB_S5P_MDNIE
-#ifdef CONFIG_MACH_KONA
-#include "s3cfb_mdnie_kona.h"
-#include "mdnie_kona.h"
-#else
 #include "s3cfb_mdnie.h"
 #include "mdnie.h"
-#endif
 #endif
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
@@ -562,25 +557,8 @@ void s3cfb_early_suspend(struct early_suspend *h)
 
 		mutex_lock(&fbdev[i]->output_lock);
 
-<<<<<<< HEAD
-		s3cfb_set_fifo_interrupt(fbdev[i], 1);
-		dev_info(fbdev[i]->dev, "fifo underrun trace\n");
-#endif
-#ifdef CONFIG_FB_S5P_MDNIE
-		/*  only FIMD0 is supported */
-		if (i == 0)
-#ifdef CONFIG_MACH_KONA
-			mdnie_setup();
-#else
-			s3c_mdnie_setup();
-#endif
-#endif
-		/* hw setting */
-		s3cfb_init_global(fbdev[i]);
-=======
 		if (pdata->backlight_off)
 			pdata->backlight_off(pdev);
->>>>>>> 67fbd24... s3cfb: i9300 update12
 
 		if (pdata->lcd_off)
 			pdata->lcd_off(pdev);
@@ -601,23 +579,7 @@ void s3cfb_early_suspend(struct early_suspend *h)
 		ret = s3cfb_display_off(fbdev[i]);
 
 #ifdef CONFIG_FB_S5P_MDNIE
-<<<<<<< HEAD
-		/*  only FIMD0 is supported */
-		if (i == 0) {
-			if (pdata->set_display_path)
-				pdata->set_display_path();
-
-			s3cfb_set_dualrgb(fbdev[i], S3C_DUALRGB_MDNIE);
-#ifdef CONFIG_MACH_KONA
-			mdnie_display_on(fbdev[i]);
-#else
-			s3c_mdnie_init_global(fbdev[i]);
-			s3c_mdnie_display_on(fbdev[i]);
-#endif
-		}
-=======
 		ret += mdnie_display_off();
->>>>>>> 67fbd24... s3cfb: i9300 update12
 #endif
 
 		if (ret > 0)
@@ -941,15 +903,7 @@ static int s3cfb_disable(struct s3cfb_global *fbdev)
 	ret = s3cfb_display_off(fbdev);
 
 #ifdef CONFIG_FB_S5P_MDNIE
-<<<<<<< HEAD
-#ifdef CONFIG_MACH_KONA
-		ret += mdnie_display_off();
-#else
-		ret += s3c_mdnie_display_off();
-=======
 	ret += mdnie_display_off();
->>>>>>> 67fbd24... s3cfb: i9300 update12
-#endif
 #endif
 
 	if (ret > 0)
@@ -1032,17 +986,6 @@ static int s3cfb_enable(struct s3cfb_global *fbdev)
 		}
 	}
 #endif
-<<<<<<< HEAD
-#ifdef CONFIG_MACH_KONA
-		mdnie_display_on(fbdev[i]);
-#else
-		s3c_mdnie_init_global(fbdev[i]);
-		set_mdnie_value(g_mdnie, 1);
-		s3c_mdnie_display_on(fbdev[i]);
-#endif
-#endif
-		s3cfb_display_on(fbdev[i]);
-=======
 
 #if defined(CONFIG_FB_S5P_VSYNC_THREAD)
 	mutex_lock(&fbdev->vsync_info.irq_lock);
@@ -1052,7 +995,6 @@ static int s3cfb_enable(struct s3cfb_global *fbdev)
 	}
 	mutex_unlock(&fbdev->vsync_info.irq_lock);
 #endif
->>>>>>> 67fbd24... s3cfb: i9300 update12
 
 	mutex_unlock(&fbdev->output_lock);
 
