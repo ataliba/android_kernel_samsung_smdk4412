@@ -1,0 +1,11 @@
+if [ "a$3" == "a" ]; then
+	evalcmd='eval "echo \$zram_size$2"';
+	eval $evalcmd;
+else
+	evalcmd='eval "zram_size$2=$3"';
+	eval $evalcmd;
+	evalcmd='eval "echo \$zram_size$2"';
+	eval $evalcmd;
+fi;
+	echo "1" > /sys/block/zram0/reset;
+	echo ${zram_size1}000000 > /sys/block/zram0/disksize;
