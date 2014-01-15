@@ -1,0 +1,3598 @@
+From 74673ee786f0283add6544f7fca7fe8952e5e3f5 Mon Sep 17 00:00:00 2001
+From: Gustavo <gustavo.santos0106@gmail.com>
+Date: Thu, 2 Jan 2014 23:23:08 -0200
+Subject: [PATCH] mali: gpu clock, voltage and threshold control - 4 steps gpu
+ control applied to r3p2 driver, ported from gokhanmoral's gpu control
+
+---
+ drivers/gpu/mali400/r3p2/mali/Kbuild               |  16 ++-
+ drivers/gpu/mali400/r3p2/mali/Kconfig              |   9 +-
+ drivers/gpu/mali400/r3p2/mali/MALI_CONFIGURATION   |   4 +-
+ drivers/gpu/mali400/r3p2/mali/Makefile             |   4 +-
+ .../mali400/r3p2/mali/common/gpu_clock_control.c   | 149 +++++++++++++++++++++
+ .../mali400/r3p2/mali/common/gpu_clock_control.h   |  14 ++
+ .../mali400/r3p2/mali/common/gpu_voltage_control.c | 103 ++++++++++++++
+ .../mali400/r3p2/mali/common/gpu_voltage_control.h |  17 +++
+ .../r3p2/mali/common/mali_block_allocator.c        |   8 +-
+ .../r3p2/mali/common/mali_block_allocator.h        |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_broadcast.c  |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_broadcast.h  |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.c   |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.h   |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_gp.c     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_gp.h     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.c |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.h |   4 +-
+ .../mali400/r3p2/mali/common/mali_gp_scheduler.c   |   4 +-
+ .../mali400/r3p2/mali/common/mali_gp_scheduler.h   |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_group.c  |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_group.h  |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_hw_core.c    |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_hw_core.h    |   4 +-
+ .../mali400/r3p2/mali/common/mali_kernel_common.h  |   6 +-
+ .../mali400/r3p2/mali/common/mali_kernel_core.c    |  13 +-
+ .../mali400/r3p2/mali/common/mali_kernel_core.h    |   5 +-
+ .../mali/common/mali_kernel_descriptor_mapping.c   |   6 +-
+ .../mali/common/mali_kernel_descriptor_mapping.h   |   4 +-
+ .../mali400/r3p2/mali/common/mali_kernel_mem_os.c  |   4 +-
+ .../mali400/r3p2/mali/common/mali_kernel_mem_os.h  |   6 +-
+ .../r3p2/mali/common/mali_kernel_memory_engine.c   |   4 +-
+ .../r3p2/mali/common/mali_kernel_memory_engine.h   |   4 +-
+ .../r3p2/mali/common/mali_kernel_utilization.c     |   4 +-
+ .../r3p2/mali/common/mali_kernel_utilization.h     |   4 +-
+ .../mali400/r3p2/mali/common/mali_kernel_vsync.c   |   5 +-
+ .../gpu/mali400/r3p2/mali/common/mali_l2_cache.c   |   6 +-
+ .../gpu/mali400/r3p2/mali/common/mali_l2_cache.h   |   4 +-
+ .../mali400/r3p2/mali/common/mali_mem_validation.c |   4 +-
+ .../mali400/r3p2/mali/common/mali_mem_validation.h |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_memory.c |  20 +--
+ drivers/gpu/mali400/r3p2/mali/common/mali_memory.h |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_mmu.c    |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_mmu.h    |   4 +-
+ .../r3p2/mali/common/mali_mmu_page_directory.c     |  10 +-
+ .../r3p2/mali/common/mali_mmu_page_directory.h     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_osk.h    |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_osk_bitops.h |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_osk_list.h   |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_osk_mali.h   |   4 +-
+ .../mali400/r3p2/mali/common/mali_osk_profiling.h  |   6 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pm.c     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pm.h     |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_pm_domain.c  |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_pm_domain.h  |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pmu.c    |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pmu.h    |  10 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pp.c     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pp.h     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.c |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.h |   4 +-
+ .../mali400/r3p2/mali/common/mali_pp_scheduler.c   |   4 +-
+ .../mali400/r3p2/mali/common/mali_pp_scheduler.h   |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_scheduler.c  |   5 +-
+ .../gpu/mali400/r3p2/mali/common/mali_scheduler.h  |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_session.c    |   4 +-
+ .../gpu/mali400/r3p2/mali/common/mali_session.h    |   4 +-
+ drivers/gpu/mali400/r3p2/mali/common/mali_ukk.h    |   4 +-
+ .../r3p2/mali/common/mali_user_settings_db.c       |   4 +-
+ .../r3p2/mali/common/mali_user_settings_db.h       |   4 +-
+ .../r3p2/mali/include/linux/mali/mali_utgard.h     |  12 +-
+ .../mali/include/linux/mali/mali_utgard_counters.h |   4 +-
+ .../mali/include/linux/mali/mali_utgard_ioctl.h    |   4 +-
+ .../linux/mali/mali_utgard_profiling_events.h      |   4 +-
+ .../linux/mali/mali_utgard_profiling_gator_api.h   |   4 +-
+ .../mali/include/linux/mali/mali_utgard_uk_types.h |   6 +-
+ .../r3p2/mali/linux/mali_device_pause_resume.c     |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.c |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.h |   4 +-
+ .../mali400/r3p2/mali/linux/mali_kernel_linux.c    |  49 ++++++-
+ .../mali400/r3p2/mali/linux/mali_kernel_linux.h    |   4 +-
+ .../mali400/r3p2/mali/linux/mali_kernel_sysfs.c    |  12 +-
+ .../mali400/r3p2/mali/linux/mali_kernel_sysfs.h    |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_linux_trace.h |  11 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_atomics.c |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_osk_irq.c |   6 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_locks.c   |   4 +-
+ .../r3p2/mali/linux/mali_osk_low_level_mem.c       |  28 ++--
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_mali.c    |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_math.c    |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_memory.c  |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_misc.c    |   4 +-
+ .../r3p2/mali/linux/mali_osk_notification.c        |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_osk_pm.c  |   4 +-
+ .../mali400/r3p2/mali/linux/mali_osk_profiling.c   |   6 +-
+ .../mali400/r3p2/mali/linux/mali_osk_specific.h    |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_osk_timers.c  |   4 +-
+ .../mali400/r3p2/mali/linux/mali_osk_wait_queue.c  |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wq.c  |   5 +-
+ .../r3p2/mali/linux/mali_pmu_power_up_down.c       |   4 +-
+ .../r3p2/mali/linux/mali_profiling_events.h        |   4 +-
+ .../r3p2/mali/linux/mali_profiling_gator_api.h     |   4 +-
+ .../r3p2/mali/linux/mali_profiling_internal.c      |   4 +-
+ .../r3p2/mali/linux/mali_profiling_internal.h      |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_sync.c    |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_sync.h    |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_sync_user.c   |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_uk_types.h    |   4 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_ukk_core.c    |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_gp.c  |   4 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_mem.c |   8 +-
+ drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_pp.c  |   4 +-
+ .../mali400/r3p2/mali/linux/mali_ukk_profiling.c   |   6 +-
+ .../gpu/mali400/r3p2/mali/linux/mali_ukk_vsync.c   |   5 +-
+ .../mali400/r3p2/mali/linux/mali_ukk_wrappers.h    |   4 +-
+ .../r3p2/mali/platform/pegasus-m400/exynos4_pmm.c  | 107 ++++++++++++---
+ drivers/gpu/mali400/r3p2/ump/Kbuild                |   5 +-
+ drivers/gpu/mali400/r3p2/ump/Kconfig               |   1 -
+ drivers/gpu/mali400/r3p2/ump/Makefile              |   4 +-
+ drivers/gpu/mali400/r3p2/ump/Makefile.common       |   4 +-
+ drivers/gpu/mali400/r3p2/ump/arch/config.h         |  12 +-
+ .../gpu/mali400/r3p2/ump/common/ump_kernel_api.c   |   6 +-
+ .../mali400/r3p2/ump/common/ump_kernel_common.c    |   4 +-
+ .../mali400/r3p2/ump/common/ump_kernel_common.h    |   4 +-
+ .../ump/common/ump_kernel_descriptor_mapping.c     |  33 +++--
+ .../ump/common/ump_kernel_descriptor_mapping.h     |   4 +-
+ .../r3p2/ump/common/ump_kernel_memory_backend.h    |   5 +-
+ .../mali400/r3p2/ump/common/ump_kernel_ref_drv.c   |   4 +-
+ .../gpu/mali400/r3p2/ump/common/ump_kernel_types.h |   4 +-
+ drivers/gpu/mali400/r3p2/ump/common/ump_osk.h      |   4 +-
+ drivers/gpu/mali400/r3p2/ump/common/ump_ukk.h      |   4 +-
+ .../r3p2/ump/include/ump_kernel_interface.h        |   4 +-
+ .../ump/include/ump_kernel_interface_ref_drv.h     |   4 +-
+ .../mali400/r3p2/ump/include/ump_kernel_platform.h |   4 +-
+ drivers/gpu/mali400/r3p2/ump/linux/ump_ioctl.h     |   4 +-
+ .../gpu/mali400/r3p2/ump/linux/ump_kernel_linux.c  |   4 +-
+ .../gpu/mali400/r3p2/ump/linux/ump_kernel_linux.h  |   4 +-
+ .../linux/ump_kernel_memory_backend_dedicated.c    |   4 +-
+ .../linux/ump_kernel_memory_backend_dedicated.h    |   5 +-
+ .../r3p2/ump/linux/ump_kernel_memory_backend_os.c  |   4 +-
+ .../r3p2/ump/linux/ump_kernel_memory_backend_os.h  |   5 +-
+ .../mali400/r3p2/ump/linux/ump_memory_backend.c    |   4 +-
+ .../gpu/mali400/r3p2/ump/linux/ump_osk_atomics.c   |   4 +-
+ .../mali400/r3p2/ump/linux/ump_osk_low_level_mem.c |   4 +-
+ drivers/gpu/mali400/r3p2/ump/linux/ump_osk_misc.c  |   4 +-
+ .../mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.c  |   4 +-
+ .../mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.h  |   4 +-
+ .../gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.c  |   4 +-
+ .../gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.h  |   4 +-
+ 149 files changed, 793 insertions(+), 390 deletions(-)
+ create mode 100644 drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.c
+ create mode 100644 drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.h
+ create mode 100644 drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.c
+ create mode 100644 drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.h
+
+diff --git a/drivers/gpu/mali400/r3p2/mali/Kbuild b/drivers/gpu/mali400/r3p2/mali/Kbuild
+index 81acbb8..e79d3e2 100644
+--- a/drivers/gpu/mali400/r3p2/mali/Kbuild
++++ b/drivers/gpu/mali400/r3p2/mali/Kbuild
+@@ -1,9 +1,9 @@
+ #
+ # Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+-# 
++#
+ # This program is free software and is provided to you under the terms of the GNU General Public License version 2
+ # as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+-# 
++#
+ # A copy of the licence is included with the program, and can also be obtained from Free Software
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ #
+@@ -12,7 +12,7 @@
+ 
+ # set up defaults if not defined by the user
+ TIMESTAMP ?= default
+-OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB ?= 16
++OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB ?= 24
+ USING_GPU_UTILIZATION ?= 1
+ PROFILING_SKIP_PP_JOBS ?= 0
+ PROFILING_SKIP_PP_AND_GP_JOBS ?= 0
+@@ -44,7 +44,6 @@ MALI_PLATFORM_FILES = $(subst $(srctree)/$(src)/,,$(wildcard $(srctree)/$(src)/p
+ # For customer releases the Linux Device Drivers will be provided as ARM proprietary and GPL releases:
+ # The ARM proprietary product will only include the license/proprietary directory
+ # The GPL product will only include the license/gpl directory
+-$(warning Current directory is $(srctree)/$(src) from $(shell pwd))
+ ifeq ($(wildcard $(srctree)/$(src)/linux/license/gpl/*),)
+     ccflags-y += -I$(srctree)/$(src)/linux/license/proprietary
+     ifeq ($(CONFIG_MALI400_PROFILING),y)
+@@ -124,6 +123,11 @@ ifneq ($(MALI_PLATFORM_FILES),)
+ 	mali-y += $(MALI_PLATFORM_FILES:.c=.o)
+ endif
+ 
++ifeq ($(CONFIG_GPU_CLOCK_CONTROL),y)
++mali-y += common/gpu_clock_control.o
++mali-y += common/gpu_voltage_control.o
++endif
++
+ mali-$(CONFIG_MALI400_PROFILING) += linux/mali_ukk_profiling.o
+ mali-$(CONFIG_MALI400_PROFILING) += linux/mali_osk_profiling.o
+ 
+@@ -145,7 +149,7 @@ ccflags-y += -DPROFILING_SKIP_PP_AND_GP_JOBS=$(PROFILING_SKIP_PP_AND_GP_JOBS)
+ ccflags-y += -DMALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP=$(MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP)
+ ccflags-y += -DMALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED=$(MALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED)
+ ccflags-y += -DMALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS=$(MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS)
+-ccflags-y += -DMALI_STATE_TRACKING=1
++ccflags-y += -DMALI_STATE_TRACKING=0
+ ccflags-y += -DMALI_OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB=$(OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB)
+ ccflags-y += -DUSING_GPU_UTILIZATION=$(USING_GPU_UTILIZATION)
+ 
+@@ -158,7 +162,7 @@ ccflags-$(CONFIG_MALI400_DEBUG) += -DDEBUG
+ 
+ # Use our defines when compiling
+ ccflags-y += -I$(srctree)/$(src) -I$(srctree)/$(src)/include -I$(srctree)/$(src)/common -I$(srctree)/$(src)/linux -I$(srctree)/$(src)/platform
+-# MALI_SEC 
++# MALI_SEC
+ ccflags-y += -I$(srctree)/$(src)/../ump/include -I$(srctree)/$(src)/include/linux/mali
+ 
+ # Get subversion revision number, fall back to only ${MALI_RELEASE_NAME} if no svn info is available
+diff --git a/drivers/gpu/mali400/r3p2/mali/Kconfig b/drivers/gpu/mali400/r3p2/mali/Kconfig
+index 14af54a..9eb2cb1 100644
+--- a/drivers/gpu/mali400/r3p2/mali/Kconfig
++++ b/drivers/gpu/mali400/r3p2/mali/Kconfig
+@@ -18,7 +18,7 @@ config MALI400_INTERNAL_PROFILING
+ 	default n
+ 	---help---
+ 	  This enables the internal legacy Mali profiling API.
+-	  
++
+ if CPU_EXYNOS4210 || CPU_EXYNOS4212 || CPU_EXYNOS4412
+ config MALI_DVFS
+ 	bool "Enable mali DVFS"
+@@ -65,3 +65,10 @@ config MALI_SHARED_INTERRUPTS
+ 	  Adds functionality required to properly support shared interrupts.  Without this support,
+ 	  the device driver will fail during insmod if it detects shared interrupts.  Works even if
+ 	  the GPU is not using shared interrupts, but can cause lower performance.
++
++config GPU_CLOCK_CONTROL
++  bool "Enable GPU clock control and voltage interface"
++  depends on MALI400
++  default y
++  help
++    This enables a sysfs interface to control gpu clock and voltage.
+diff --git a/drivers/gpu/mali400/r3p2/mali/MALI_CONFIGURATION b/drivers/gpu/mali400/r3p2/mali/MALI_CONFIGURATION
+index 4b099b7..dc6f3f6 100644
+--- a/drivers/gpu/mali400/r3p2/mali/MALI_CONFIGURATION
++++ b/drivers/gpu/mali400/r3p2/mali/MALI_CONFIGURATION
+@@ -9,13 +9,13 @@ KDIR-pb11mp:=/projects/pr297/linux/pb11mp/current/linux
+ KDIR-vea9:=/projects/pr297/linux/vea9/current/linux
+ KDIR-snowball:=/no/default/kernel/yet
+ 
+-# Name of platform directory with platform specific code (should be built into kernel on a real system) 
++# Name of platform directory with platform specific code (should be built into kernel on a real system)
+ MALI_PLATFORM-odroida=exynos4
+ MALI_PLATFORM-odroidpc=exynos4
+ MALI_PLATFORM-odroidq=exynos4
+ MALI_PLATFORM-orion=exynos4
+ MALI_PLATFORM-pegasus=exynos4
+-# MALI_SEC 
++# MALI_SEC
+ MALI_PLATFORM-pegasus-m400=pegasus-m400
+ MALI_PLATFORM-exynos4270=exynos4270
+ MALI_PLATFORM-tcc8900=tcc8900
+diff --git a/drivers/gpu/mali400/r3p2/mali/Makefile b/drivers/gpu/mali400/r3p2/mali/Makefile
+index b487011..f021016 100644
+--- a/drivers/gpu/mali400/r3p2/mali/Makefile
++++ b/drivers/gpu/mali400/r3p2/mali/Makefile
+@@ -1,9 +1,9 @@
+ #
+ # Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+-# 
++#
+ # This program is free software and is provided to you under the terms of the GNU General Public License version 2
+ # as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+-# 
++#
+ # A copy of the licence is included with the program, and can also be obtained from Free Software
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ #
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.c b/drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.c
+new file mode 100644
+index 0000000..ee21f93
+--- /dev/null
++++ b/drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.c
+@@ -0,0 +1,149 @@
++/*
++ * gpu_clock_control.c -- a clock control interface for the sgs2/3
++ *
++ *  Copyright (C) 2011 Michael Wodkins
++ *  twitter - @xdanetarchy
++ *  XDA-developers - netarchy
++ *  modified by gokhanmoral
++ *
++ *  Modified by Andrei F. for Galaxy S3 / Perseus kernel (June 2012)
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of the GNU General Public License as published by the
++ *  Free Software Foundation;
++ *
++ */
++
++#include <linux/platform_device.h>
++#include <linux/miscdevice.h>
++
++#include "gpu_clock_control.h"
++
++#define GPU_MAX_CLOCK 800
++#define GPU_MIN_CLOCK 10
++#define MALI_STEPS 4
++
++typedef struct mali_dvfs_tableTag{
++    unsigned int clock;
++    unsigned int freq;
++    unsigned int vol;
++    unsigned int downthreshold;
++    unsigned int upthreshold;
++}mali_dvfs_table;
++
++extern mali_dvfs_table mali_dvfs[MALI_STEPS];
++
++extern int step0_clk;
++extern int step1_clk;
++extern int step2_clk;
++extern int step3_clk;
++
++extern int step0_up;
++extern int step1_up;
++extern int step2_up;
++
++extern int step1_down;
++extern int step2_down;
++extern int step3_down;
++
++static ssize_t gpu_clock_show(struct device *dev, struct device_attribute *attr, char *buf) {
++        return sprintf(buf, "Step0: %d\nStep1: %d\nStep2: %d\nStep3: %d\n"
++                                                "Threshold0-1/up-down: %d%% %d%%\n"
++                                                "Threshold1-2/up-down: %d%% %d%%\n"
++                                                "Threshold2-3/up-down: %d%% %d%%\n",
++                mali_dvfs[0].clock,
++                mali_dvfs[1].clock,
++                mali_dvfs[2].clock,
++                mali_dvfs[3].clock,
++                mali_dvfs[0].upthreshold,
++                mali_dvfs[1].downthreshold,
++                mali_dvfs[1].upthreshold,
++                mali_dvfs[2].downthreshold,
++                mali_dvfs[2].upthreshold,
++                mali_dvfs[3].downthreshold
++                );
++}
++
++unsigned int g[(MALI_STEPS-1)*2];
++
++static ssize_t gpu_clock_store(struct device *dev, struct device_attribute *attr,
++                               const char *buf, size_t count) {
++        unsigned int ret = -EINVAL;
++        int i = 0;
++
++        if ( (ret=sscanf(buf, "%d%% %d%% %d%% %d%% %d%% %d%% %d%%",
++                         &g[0], &g[1], &g[2], &g[3], &g[4], &g[5], &g[6]))
++              == (MALI_STEPS-1)*2 ) i=1;
++
++        if(i) {
++                if(g[1]<0 || g[0]>100 || g[3]<0 || g[2]>100 || g[5]<0 || g[4]>100)
++                        return -EINVAL;
++
++                mali_dvfs[0].upthreshold = (int)(g[0]);
++                mali_dvfs[1].downthreshold = (int)(g[1]);
++                mali_dvfs[1].upthreshold = (int)(g[2]);
++                mali_dvfs[2].downthreshold = (int)(g[3]);
++                mali_dvfs[2].upthreshold = (int)(g[4]);
++                mali_dvfs[3].downthreshold = (int)(g[5]);
++        } else {
++                if ( (ret=sscanf(buf, "%d %d %d %d", &g[0], &g[1], &g[2], &g[3])) != MALI_STEPS)
++                        return -EINVAL;
++
++                /* safety floor and ceiling - netarchy */
++                for( i = 0; i < MALI_STEPS; i++ ) {
++                        if (g[i] < GPU_MIN_CLOCK) {
++                                g[i] = GPU_MIN_CLOCK;
++                        }
++                        else if (g[i] > GPU_MAX_CLOCK) {
++                                g[i] = GPU_MAX_CLOCK;
++                        }
++
++                        if(ret==MALI_STEPS)
++                                mali_dvfs[i].clock=g[i];
++                }
++        }
++
++  step0_clk = mali_dvfs[0].clock;
++  step1_clk = mali_dvfs[1].clock;
++  step2_clk = mali_dvfs[2].clock;
++  step3_clk = mali_dvfs[3].clock;
++
++  step0_up = mali_dvfs[0].upthreshold;
++  step1_up = mali_dvfs[1].upthreshold;
++  step2_up = mali_dvfs[2].upthreshold;
++
++  step1_down = mali_dvfs[1].downthreshold;
++  step2_down = mali_dvfs[2].downthreshold;
++  step3_down = mali_dvfs[3].downthreshold;
++
++        return count;
++}
++
++
++static DEVICE_ATTR(gpu_control, S_IRUGO | S_IWUGO, gpu_clock_show, gpu_clock_store);
++
++static struct attribute *gpu_clock_control_attributes[] = {
++        &dev_attr_gpu_control.attr,
++        NULL
++};
++
++static struct attribute_group gpu_clock_control_group = {
++        .attrs = gpu_clock_control_attributes,
++};
++
++static struct miscdevice gpu_clock_control_device = {
++        .minor = MISC_DYNAMIC_MINOR,
++        .name = "gpu_clock_control",
++};
++
++void gpu_clock_control_start()
++{
++        printk("Initializing gpu clock control interface\n");
++
++        misc_register(&gpu_clock_control_device);
++        if (sysfs_create_group(&gpu_clock_control_device.this_device->kobj,
++                                &gpu_clock_control_group) < 0) {
++                printk("%s sysfs_create_group failed\n", __FUNCTION__);
++                pr_err("Unable to create group for %s\n", gpu_clock_control_device.name);
++        }
++}
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.h b/drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.h
+new file mode 100644
+index 0000000..2170673
+--- /dev/null
++++ b/drivers/gpu/mali400/r3p2/mali/common/gpu_clock_control.h
+@@ -0,0 +1,14 @@
++/*
++ * gpu_clock_control.h -- a clock control interface for the sgs2
++ *
++ *  Copyright (C) 2011 Michael Wodkins
++ *  twitter - @xdanetarchy
++ *  XDA-developers - netarchy
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of the GNU General Public License as published by the
++ *  Free Software Foundation;
++ *
++ */
++
++void gpu_clock_control_start(void);
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.c b/drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.c
+new file mode 100644
+index 0000000..d46b837
+--- /dev/null
++++ b/drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.c
+@@ -0,0 +1,103 @@
++/*
++ * gpu_voltage_control.c -- gpu voltage control interface for the sgs2/3
++ *
++ *  Copyright (C) 2011 Michael Wodkins
++ *  twitter - @xdanetarchy
++ *  XDA-developers - netarchy
++ *
++ *  Modified for SiyahKernel
++ *
++ *  Modified by Andrei F. for Galaxy S3 / Perseus kernel (June 2012)
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of the GNU General Public License as published by the
++ *  Free Software Foundation;
++ *
++ */
++
++#include <linux/platform_device.h>
++#include <linux/miscdevice.h>
++
++#include "gpu_voltage_control.h"
++
++#define MIN_VOLTAGE_GPU  800000
++#define MAX_VOLTAGE_GPU 1200000
++#define MALI_STEPS 4
++
++typedef struct mali_dvfs_tableTag{
++    unsigned int clock;
++    unsigned int freq;
++    unsigned int vol;
++    unsigned int downthreshold;
++    unsigned int upthreshold;
++}mali_dvfs_table;
++
++extern mali_dvfs_table mali_dvfs[MALI_STEPS];
++
++unsigned int gv[MALI_STEPS];
++
++extern int step0_vol;
++extern int step1_vol;
++extern int step2_vol;
++extern int step3_vol;
++
++static ssize_t gpu_voltage_show(struct device *dev, struct device_attribute *attr, char *buf) {
++        return sprintf(buf, "Step1: %d\nStep2: %d\nStep3: %d\n Step4: %d\n",
++                         mali_dvfs[0].vol, mali_dvfs[1].vol,mali_dvfs[2].vol, mali_dvfs[3].vol);
++}
++
++static ssize_t gpu_voltage_store(struct device *dev, struct device_attribute *attr, const char *buf,
++                                                                        size_t count) {
++        unsigned int ret = -EINVAL;
++        int i = 0;
++
++        ret = sscanf(buf, "%d %d %d %d", &gv[0], &gv[1], &gv[2], &gv[3]);
++        if(ret!=MALI_STEPS) return -EINVAL;
++
++        /* safety floor and ceiling - netarchy */
++        for( i = 0; i < MALI_STEPS; i++ ) {
++                if (gv[i] < MIN_VOLTAGE_GPU) {
++                    gv[i] = MIN_VOLTAGE_GPU;
++                }
++                else if (gv[i] > MAX_VOLTAGE_GPU) {
++                    gv[i] = MAX_VOLTAGE_GPU;
++                }
++                if(ret==MALI_STEPS)
++                    mali_dvfs[i].vol=gv[i];
++        }
++
++        step0_vol = mali_dvfs[0].vol;
++        step1_vol = mali_dvfs[1].vol;
++        step2_vol = mali_dvfs[2].vol;
++        step3_vol = mali_dvfs[3].vol;
++
++        return count;
++}
++
++static DEVICE_ATTR(gpu_control, S_IRUGO | S_IWUGO, gpu_voltage_show, gpu_voltage_store);
++
++static struct attribute *gpu_voltage_control_attributes[] = {
++        &dev_attr_gpu_control.attr,
++        NULL
++};
++
++static struct attribute_group gpu_voltage_control_group = {
++        .attrs = gpu_voltage_control_attributes,
++};
++
++static struct miscdevice gpu_voltage_control_device = {
++        .minor = MISC_DYNAMIC_MINOR,
++        .name = "gpu_voltage_control",
++};
++
++void gpu_voltage_control_start()
++{
++        printk("Initializing gpu voltage control interface\n");
++
++        misc_register(&gpu_voltage_control_device);
++        if (sysfs_create_group(&gpu_voltage_control_device.this_device->kobj,
++                                &gpu_voltage_control_group) < 0) {
++                printk("%s sysfs_create_group failed\n", __FUNCTION__);
++                pr_err("Unable to create group for %s\n", gpu_voltage_control_device.name);
++        }
++}
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.h b/drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.h
+new file mode 100644
+index 0000000..7bc1c5f
+--- /dev/null
++++ b/drivers/gpu/mali400/r3p2/mali/common/gpu_voltage_control.h
+@@ -0,0 +1,17 @@
++/*
++ * gpu_voltage_control.h -- gpu voltage control interface for the sgs2/3
++ *
++ *  Copyright (C) 2011 Michael Wodkins
++ *  twitter - @xdanetarchy
++ *  XDA-developers - netarchy
++ *
++ *  Modified for SiyahKernel
++ *  Modified for Perseus kernel
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of the GNU General Public License as published by the
++ *  Free Software Foundation;
++ *
++ */
++
++void gpu_voltage_control_start(void);
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.c b/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.c
+index 3651ce5..3ba0fdb 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -78,7 +78,7 @@ mali_physical_memory_allocator * mali_block_allocator_create(u32 base_address, u
+             info->mutex = _mali_osk_lock_init( _MALI_OSK_LOCKFLAG_ORDERED, 0, _MALI_OSK_LOCK_ORDER_MEM_INFO);
+             if (NULL != info->mutex)
+             {
+-        		info->all_blocks = _mali_osk_malloc(sizeof(block_info) * num_blocks);
++			info->all_blocks = _mali_osk_malloc(sizeof(block_info) * num_blocks);
+ 			    if (NULL != info->all_blocks)
+ 			    {
+ 				    u32 i;
+@@ -178,7 +178,7 @@ static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx
+ 
+ 		padding = *offset & (MALI_BLOCK_SIZE-1);
+ 
+- 		if (MALI_BLOCK_SIZE - padding < left)
++		if (MALI_BLOCK_SIZE - padding < left)
+ 		{
+ 			current_mapping_size = MALI_BLOCK_SIZE - padding;
+ 		}
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.h b/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.h
+index d3f0f9b..35b9d8f 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_block_allocator.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.c b/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.c
+index 8b05496..7b4a2ed 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.h b/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.h
+index df5f2f9..b3fb99e 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_broadcast.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.c b/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.c
+index 0181663..ec6415e 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.h b/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.h
+index b1a59d6..56b8da0 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_dlbu.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_gp.c b/drivers/gpu/mali400/r3p2/mali/common/mali_gp.c
+index c2b01f9..b363cd9 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_gp.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_gp.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_gp.h b/drivers/gpu/mali400/r3p2/mali/common/mali_gp.h
+index 2750c75..aa246fd 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_gp.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_gp.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.c b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.c
+index dae68b1..7136526 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.h b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.h
+index e021b9b..13258c5 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_job.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.c b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.c
+index ebbc281..37570d3 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.h b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.h
+index 7f61a78..18c4d30 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_gp_scheduler.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_group.c b/drivers/gpu/mali400/r3p2/mali/common/mali_group.c
+index 070879e..0dd5b86 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_group.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_group.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_group.h b/drivers/gpu/mali400/r3p2/mali/common/mali_group.h
+index 6a6a777..11e3c07 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_group.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_group.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.c b/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.c
+index c3a9c8b..264f3ae 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.h b/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.h
+index e687f60..bea4266 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_hw_core.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_common.h b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_common.h
+index 3376a07..d08b106 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_common.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_common.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -28,7 +28,7 @@
+ #include <linux/kernel.h>
+ 	#define MALI_PANIC(fmt, args...) panic( fmt, ## args );
+ #else
+-	#define MALI_PANIC(fmt, args...) 
++	#define MALI_PANIC(fmt, args...)
+ #endif
+ 
+ /* The file include several useful macros for error checking, debugging and printing.
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.c b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.c
+index 5680374..0e26422 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -38,6 +38,10 @@
+ #include "mali_profiling_internal.h"
+ #endif
+ 
++#ifdef CONFIG_GPU_CLOCK_CONTROL
++#include <gpu_clock_control.h>
++#include <gpu_voltage_control.h>
++#endif
+ 
+ /* Mali GPU memory. Real values come from module parameter or from device specific data */
+ unsigned int mali_dedicated_mem_start = 0;
+@@ -943,6 +947,11 @@ _mali_osk_errcode_t mali_initialize_subsystems(void)
+ 	err = mali_utilization_init();
+ 	if (_MALI_OSK_ERR_OK != err) goto utilization_init_failed;
+ 
++#ifdef CONFIG_GPU_CLOCK_CONTROL
++    gpu_clock_control_start();
++    gpu_voltage_control_start();
++#endif
++
+ 	/* Allowing the system to be turned off */
+ 	_mali_osk_pm_dev_ref_dec();
+ 
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.h b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.h
+index bf56b5c..8ff8236 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_core.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -48,4 +48,3 @@ MALI_STATIC_INLINE mali_bool mali_is_mali400(void)
+ }
+ 
+ #endif /* __MALI_KERNEL_CORE_H__ */
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.c b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.c
+index b9f05ca..6a10d85 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -48,7 +48,7 @@ mali_descriptor_mapping * mali_descriptor_mapping_create(int init_entries, int m
+ 			    map->current_nr_mappings = init_entries;
+ 			    return map;
+             }
+-        	descriptor_table_free(map->table);
++		descriptor_table_free(map->table);
+ 		}
+ 		_mali_osk_free(map);
+ 	}
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.h b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.h
+index 82ed94d..7b8ce08 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_descriptor_mapping.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.c b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.c
+index 0ab3a80..ec89f03 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.h b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.h
+index 0946169..de5d5dd 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_mem_os.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -33,5 +33,3 @@
+ mali_physical_memory_allocator * mali_os_allocator_create(u32 max_allocation, u32 cpu_usage_adjust, const char *name);
+ 
+ #endif /* __MALI_KERNEL_MEM_OS_H__ */
+-
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.c b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.c
+index 00257ec..7f67c1f 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.h b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.h
+index 3b41cee..172bea9 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_memory_engine.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.c b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.c
+index 9dae2e8..2b32d2c 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.h b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.h
+index 6ee5101..de28cb9 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_utilization.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_vsync.c b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_vsync.c
+index a1fdf00..8549023 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_vsync.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_kernel_vsync.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -48,4 +48,3 @@ _mali_osk_errcode_t _mali_ukk_vsync_event_report(_mali_uk_vsync_event_report_s *
+ 	MALI_DEBUG_PRINT(4, ("Received VSYNC event: %d\n", event));
+ 	MALI_SUCCESS;
+ }
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.c b/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.c
+index b5cfcb5..9cb30de 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -67,7 +67,7 @@
+ 	MALI400_L2_CACHE_STATUS_DATA_BUSY    = 0x02, /**< L2 cache is busy handling data requests */
+ } mali_l2_cache_status;
+ 
+-#define MALI400_L2_MAX_READS_DEFAULT 0x1C
++#define MALI400_L2_MAX_READS_DEFAULT 0x30
+ 
+ static struct mali_l2_cache_core *mali_global_l2_cache_cores[MALI_MAX_NUMBER_OF_L2_CACHE_CORES] = { NULL, };
+ static u32 mali_global_num_l2_cache_cores = 0;
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.h b/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.h
+index cabed39..da86303 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_l2_cache.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.c b/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.c
+index aaf9c73..998d302 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.h b/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.h
+index 1eeab38..e020429 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_mem_validation.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_memory.c b/drivers/gpu/mali400/r3p2/mali/common/mali_memory.c
+index 1654675..faf75ca 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_memory.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_memory.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -561,8 +561,8 @@ _mali_osk_errcode_t _mali_ukk_attach_ump_mem( _mali_uk_attach_ump_mem_s *args )
+ 	mali_memory_allocation * descriptor;
+ 	int md;
+ 
+-  	MALI_DEBUG_ASSERT_POINTER(args);
+-  	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
++	MALI_DEBUG_ASSERT_POINTER(args);
++	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
+ 
+ 	session_data = (struct mali_session_data *)args->ctx;
+ 	MALI_CHECK_NON_NULL(session_data, _MALI_OSK_ERR_INVALID_ARGS);
+@@ -995,7 +995,7 @@ _mali_osk_errcode_t _mali_ukk_mem_mmap( _mali_uk_mem_mmap_s *args )
+ 	if (0 == mali_allocation_engine_allocate_memory(memory_engine, descriptor, physical_memory_allocators, &session_data->memory_head))
+ 	{
+ 		/* We do not FLUSH nor TLB_ZAP on MMAP, since we do both of those on job start*/
+-	   	_mali_osk_lock_signal(session_data->memory_lock, _MALI_OSK_LOCKMODE_RW);
++		_mali_osk_lock_signal(session_data->memory_lock, _MALI_OSK_LOCKMODE_RW);
+ 
+ 		args->mapping = descriptor->mapping;
+ 		args->cookie = (u32)descriptor;
+@@ -1005,7 +1005,7 @@ _mali_osk_errcode_t _mali_ukk_mem_mmap( _mali_uk_mem_mmap_s *args )
+ 	}
+ 	else
+ 	{
+-	   	_mali_osk_lock_signal(session_data->memory_lock, _MALI_OSK_LOCKMODE_RW);
++		_mali_osk_lock_signal(session_data->memory_lock, _MALI_OSK_LOCKMODE_RW);
+ 		/* OOM, but not a fatal error */
+ 		MALI_DEBUG_PRINT(4, ("Memory allocation failure, OOM\n"));
+ 		_mali_osk_free(descriptor);
+@@ -1189,7 +1189,7 @@ void mali_mmu_release_table_page(u32 pa)
+ 
+ 	MALI_DEBUG_PRINT(4, ("Releasing table page 0x%08X to the cache\n", pa));
+ 
+-   	_mali_osk_lock_wait(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
++	_mali_osk_lock_wait(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
+ 
+ 	/* find the entry this address belongs to */
+ 	/* first check the partial list */
+@@ -1213,7 +1213,7 @@ void mali_mmu_release_table_page(u32 pa)
+ 				_mali_osk_free(alloc->usage_map);
+ 				_mali_osk_free(alloc);
+ 			}
+-		   	_mali_osk_lock_signal(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
++			_mali_osk_lock_signal(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
+ 			MALI_DEBUG_PRINT(4, ("(partial list)Released table page 0x%08X to the cache\n", pa));
+ 			return;
+ 		}
+@@ -1246,7 +1246,7 @@ void mali_mmu_release_table_page(u32 pa)
+ 				_mali_osk_list_move(&alloc->list, &page_table_cache.partial);
+ 			}
+ 
+-		   	_mali_osk_lock_signal(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
++			_mali_osk_lock_signal(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
+ 			MALI_DEBUG_PRINT(4, ("(full list)Released table page 0x%08X to the cache\n", pa));
+ 			return;
+ 		}
+@@ -1254,7 +1254,7 @@ void mali_mmu_release_table_page(u32 pa)
+ 
+ 	MALI_DEBUG_PRINT(1, ("pa 0x%x not found in the page table cache\n", (void*)pa));
+ 
+-   	_mali_osk_lock_signal(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
++	_mali_osk_lock_signal(page_table_cache.lock, _MALI_OSK_LOCKMODE_RW);
+ }
+ 
+ static _mali_osk_errcode_t mali_mmu_page_table_cache_create(void)
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_memory.h b/drivers/gpu/mali400/r3p2/mali/common/mali_memory.h
+index 537c346..87f3149 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_memory.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_memory.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.c b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.c
+index 158cccf..a010ecb 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.h b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.h
+index 59b5399..d31e707 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.c b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.c
+index 258fc1b..c865353 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -448,7 +448,7 @@ _mali_osk_errcode_t _mali_ukk_query_mmu_page_table_dump_size( _mali_uk_query_mmu
+ 	struct mali_session_data * session_data;
+ 
+ 	MALI_DEBUG_ASSERT_POINTER(args);
+-  	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
++	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
+ 
+ 	session_data = (struct mali_session_data *)(args->ctx);
+ 
+@@ -463,8 +463,8 @@ _mali_osk_errcode_t _mali_ukk_dump_mmu_page_table( _mali_uk_dump_mmu_page_table_
+ 	struct dump_info info = { 0, 0, 0, NULL };
+ 	struct mali_session_data * session_data;
+ 
+-  	MALI_DEBUG_ASSERT_POINTER(args);
+-  	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
++	MALI_DEBUG_ASSERT_POINTER(args);
++	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
+ 	MALI_CHECK_NON_NULL(args->buffer, _MALI_OSK_ERR_INVALID_ARGS);
+ 
+ 	session_data = (struct mali_session_data *)(args->ctx);
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.h b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.h
+index 628833a..67225b1 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_mmu_page_directory.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_osk.h b/drivers/gpu/mali400/r3p2/mali/common/mali_osk.h
+index 6217203..553f36b 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_osk.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_osk.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_bitops.h b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_bitops.h
+index f262f7d..d4a2907 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_bitops.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_bitops.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_list.h b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_list.h
+index 49f01b6..d6d6d6d 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_list.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_list.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_mali.h b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_mali.h
+index 2916a0d..5bb1c1a 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_mali.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_mali.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_profiling.h b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_profiling.h
+index c4822e2..da24e70 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_osk_profiling.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_osk_profiling.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -137,5 +137,3 @@
+ #endif /* defined(CONFIG_MALI400_PROFILING)  && defined(CONFIG_TRACEPOINTS) */
+ 
+ #endif /* __MALI_OSK_PROFILING_H__ */
+-
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pm.c b/drivers/gpu/mali400/r3p2/mali/common/mali_pm.c
+index e1d6aa4..b992000 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pm.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pm.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pm.h b/drivers/gpu/mali400/r3p2/mali/common/mali_pm.h
+index 36f0f50..7e41cdd 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pm.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pm.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.c b/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.c
+index 9193778..00802c3 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.h b/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.h
+index 3f3fa24..bb44884 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pm_domain.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.c b/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.c
+index 668c8e9..923ad04 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.h b/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.h
+index 7e2f67c..a5a84b6 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pmu.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -37,7 +37,7 @@
+ struct mali_pmu_core;
+ 
+ /** @brief Initialisation of MALI PMU
+- * 
++ *
+  * This is called from entry point of the driver in order to create and intialize the PMU resource
+  *
+  * @param resource it will be a pointer to a PMU resource
+@@ -48,7 +48,7 @@
+ struct mali_pmu_core *mali_pmu_create(_mali_osk_resource_t *resource, u32 number_of_pp_cores, u32 number_of_l2_caches);
+ 
+ /** @brief It deallocates the PMU resource
+- * 
++ *
+  * This is called on the exit of the driver to terminate the PMU resource
+  *
+  * @param pmu Pointer to PMU core object to delete
+@@ -105,7 +105,7 @@
+ _mali_osk_errcode_t mali_pmu_power_up_all(struct mali_pmu_core *pmu);
+ 
+ /** @brief Retrieves the Mali PMU core object (if any)
+- * 
++ *
+  * @return The Mali PMU object, or NULL if no PMU exists.
+  */
+ struct mali_pmu_core *mali_pmu_get_global_pmu_core(void);
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pp.c b/drivers/gpu/mali400/r3p2/mali/common/mali_pp.c
+index 8273239..77e82d1 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pp.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pp.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pp.h b/drivers/gpu/mali400/r3p2/mali/common/mali_pp.h
+index dd8f350..b92cba7 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pp.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pp.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.c b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.c
+index ca0ea05..b8ddd45 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.h b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.h
+index 2aed8cc..2789bdc 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_job.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.c b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.c
+index 3f10bdc..12d63de 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.h b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.h
+index 71ec042..4afd10a 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_pp_scheduler.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.c b/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.c
+index f360209..78cc249 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -34,4 +34,3 @@ u32 mali_scheduler_get_new_id(void)
+ 	u32 job_id = _mali_osk_atomic_inc_return(&mali_job_autonumber);
+ 	return job_id;
+ }
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.h b/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.h
+index 63e5be8..418bc3a 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_scheduler.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_session.c b/drivers/gpu/mali400/r3p2/mali/common/mali_session.c
+index 2394bb9..05af4a1 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_session.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_session.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_session.h b/drivers/gpu/mali400/r3p2/mali/common/mali_session.h
+index 5c34dde..2d57dd0 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_session.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_session.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_ukk.h b/drivers/gpu/mali400/r3p2/mali/common/mali_ukk.h
+index 1f8a320..702e9d3 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_ukk.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_ukk.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.c b/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.c
+index 8720b9a..bd53459 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.c
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.c
+@@ -1,9 +1,9 @@
+ /**
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.h b/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.h
+index fbb9415..21edcc3 100644
+--- a/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.h
++++ b/drivers/gpu/mali400/r3p2/mali/common/mali_user_settings_db.h
+@@ -1,9 +1,9 @@
+ /**
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard.h b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard.h
+index cf3374a..78a27a7 100644
+--- a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard.h
++++ b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -353,15 +353,15 @@ struct mali_gpu_device_data
+ };
+ 
+ /** @brief MALI GPU power down using MALI in-built PMU
+- * 
+- * called to power down all cores 
++ *
++ * called to power down all cores
+  */
+ int mali_pmu_powerdown(void);
+ 
+ 
+ /** @brief MALI GPU power up using MALI in-built PMU
+- * 
+- * called to power up all cores 
++ *
++ * called to power up all cores
+  */
+ int mali_pmu_powerup(void);
+ 
+diff --git a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_counters.h b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_counters.h
+index 3ef9a28..7f07a69 100644
+--- a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_counters.h
++++ b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_counters.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_ioctl.h b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_ioctl.h
+index 6043a7d..1b7ec01 100644
+--- a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_ioctl.h
++++ b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_ioctl.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_events.h b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_events.h
+index 99864b8..86c886e 100644
+--- a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_events.h
++++ b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_events.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_gator_api.h b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_gator_api.h
+index c449215..2276537 100644
+--- a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_gator_api.h
++++ b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_profiling_gator_api.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_uk_types.h b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_uk_types.h
+index 4957095..0395bd4 100644
+--- a/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_uk_types.h
++++ b/drivers/gpu/mali400/r3p2/mali/include/linux/mali/mali_utgard_uk_types.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -206,7 +206,7 @@
+ 
+ typedef enum mali_memory_cache_settings
+ {
+-	MALI_CACHE_STANDARD 			= 0,
++	MALI_CACHE_STANDARD			= 0,
+ 	MALI_CACHE_GP_READ_ALLOCATE     = 1,
+ } mali_memory_cache_settings ;
+ 
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_device_pause_resume.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_device_pause_resume.c
+index 0b82cba..2b0f545 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_device_pause_resume.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_device_pause_resume.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.c
+index c34b2c6..474e7ed 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.h
+index 1af3efc..490b12b 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_dma_buf.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.c
+index f337d09..278b774 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.c
+@@ -1,9 +1,9 @@
+ /**
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -55,7 +55,7 @@
+ extern const char *__malidrv_build_info(void);
+ 
+ /* Module parameter to control log level */
+-int mali_debug_level = 2;
++int mali_debug_level = 0;
+ module_param(mali_debug_level, int, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP | S_IROTH); /* rw-rw-r-- */
+ MODULE_PARM_DESC(mali_debug_level, "Higher number, more dmesg output");
+ 
+@@ -97,6 +97,49 @@
+ EXPORT_SYMBOL(mali_set_user_setting);
+ EXPORT_SYMBOL(mali_get_user_setting);
+ 
++extern int step0_clk;
++module_param(step0_clk, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step0_clk, "Mali Current step0_clk");
++extern int step0_vol;
++module_param(step0_vol, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step0_vol, "Mali Current step0_vol");
++extern int step1_clk;
++module_param(step1_clk, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step1_clk, "Mali Current step1_clk");
++extern int step0_up;
++module_param(step0_up, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step0_up, "Mali Current step0_up");
++extern int step1_down;
++module_param(step1_down, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step1_down, "Mali Current step1_down");
++extern int step1_vol;
++module_param(step1_vol, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step1_vol, "Mali Current step1_vol");
++extern int step2_clk;
++module_param(step2_clk, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step2_clk, "Mali Current step2_clk");
++extern int step1_up;
++module_param(step1_up, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step1_up, "Mali Current step1_up");
++extern int step2_down;
++module_param(step2_down, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step2_down, "Mali Current step2_down");
++extern int step2_vol;
++module_param(step2_vol, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step2_vol, "Mali Current step2_vol");
++extern int step3_clk;
++module_param(step3_clk, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step3_clk, "Mali Current step3_clk");
++extern int step2_up;
++module_param(step2_up, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step2_up, "Mali Current step2_up");
++extern int step3_down;
++module_param(step3_down, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step3_down, "Mali Current step3_down");
++extern int step3_vol;
++module_param(step3_vol, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
++MODULE_PARM_DESC(step3_vol, "Mali Current step3_vol");
++
+ static char mali_dev_name[] = "mali"; /* should be const, but the functions we call requires non-cost */
+ 
+ /* This driver only supports one Mali device, and this variable stores this single platform device */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.h
+index 8bc4c39..7ba7e9c 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_linux.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.c
+index fa1fa9c..9908194 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.c
+@@ -1,9 +1,9 @@
+ /**
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -669,8 +669,8 @@ static ssize_t l2_all_counter_srcx_write(struct file *filp, const char __user *u
+ 			{
+ 				return 0;
+ 			}
+-		}				
+-		
++		}
++
+ 		/* try next L2 */
+ 		l2_id++;
+ 		l2_cache = mali_l2_cache_core_get_glob_l2_core(l2_id);
+@@ -935,7 +935,7 @@ static ssize_t profiling_record_write(struct file *filp, const char __user *ubuf
+ 			MALI_DEBUG_PRINT(2, ("Failed to stop recording of profiling events\n"));
+ 			return -EFAULT;
+ 		}
+-		
++
+ 		MALI_DEBUG_PRINT(2, ("Profiling recording stopped (recorded %u events)\n", count));
+ 	}
+ 
+@@ -1635,7 +1635,7 @@ int mali_sysfs_register(const char *mali_dev_name)
+ 						debugfs_create_file("counter_src1", 0600, mali_l2_l2x_dir, l2_cache, &l2_l2x_counter_src1_fops);
+ 						debugfs_create_file("base_addr", 0400, mali_l2_l2x_dir, &l2_cache->hw_core, &hw_core_base_addr_fops);
+ 					}
+-					
++
+ 					/* try next L2 */
+ 					l2_id++;
+ 					l2_cache = mali_l2_cache_core_get_glob_l2_core(l2_id);
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.h
+index f970f0f..31e7bc6 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_kernel_sysfs.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_linux_trace.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_linux_trace.h
+index 5329ba3..c07c579 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_linux_trace.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_linux_trace.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -24,10 +24,10 @@
+ #define TRACE_INCLUDE_FILE mali_linux_trace
+ 
+ /**
+- * Define the tracepoint used to communicate the status of a GPU. Called 
++ * Define the tracepoint used to communicate the status of a GPU. Called
+  * when a GPU turns on or turns off.
+  *
+- * @param event_id The type of the event. This parameter is a bitfield 
++ * @param event_id The type of the event. This parameter is a bitfield
+  *  encoding the type of the event.
+  *
+  * @param d0 First data parameter.
+@@ -38,7 +38,7 @@
+  */
+ TRACE_EVENT(mali_timeline_event,
+ 
+-    TP_PROTO(unsigned int event_id, unsigned int d0, unsigned int d1, 
++    TP_PROTO(unsigned int event_id, unsigned int d0, unsigned int d1,
+         unsigned int d2, unsigned int d3, unsigned int d4),
+ 
+     TP_ARGS(event_id, d0, d1, d2, d3, d4),
+@@ -123,4 +123,3 @@
+ 
+ /* This part must exist outside the header guard. */
+ #include <trace/define_trace.h>
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_atomics.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_atomics.c
+index 05831c5..846fd3b 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_atomics.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_atomics.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_irq.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_irq.c
+index 787a145..057e525 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_irq.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_irq.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -84,7 +84,7 @@ _mali_osk_irq_t *_mali_osk_irq_init( u32 irqnum, _mali_osk_irq_uhandler_t uhandl
+ 			MALI_DEBUG_PRINT(2, ("Probe for irq failed\n"));
+ 		}
+ 	}
+-	
++
+ 	irq_object->irqnum = irqnum;
+ 	irq_object->uhandler = uhandler;
+ 	irq_object->data = int_data;
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_locks.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_locks.c
+index cce946a..46240a3 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_locks.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_locks.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_low_level_mem.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_low_level_mem.c
+index 8c0ef17..0fe5e6a 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_low_level_mem.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_low_level_mem.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -91,7 +91,7 @@ struct MappingInfo
+ #ifdef MALI_OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB
+ 	static int pre_allocated_memory_size_max      = MALI_OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB * 1024 * 1024;
+ #else
+-	static int pre_allocated_memory_size_max      = 16 * 1024 * 1024; /* 6 MiB */
++	static int pre_allocated_memory_size_max      = 24 * 1024 * 1024; /* 24 MiB */
+ #endif
+ 
+ static struct vm_operations_struct mali_kernel_vm_ops =
+@@ -361,9 +361,9 @@ void _mali_osk_mem_unmapioregion( u32 phys, u32 size, mali_io_address virt )
+ mali_io_address _mali_osk_mem_allocioregion( u32 *phys, u32 size )
+ {
+ 	void * virt;
+- 	MALI_DEBUG_ASSERT_POINTER( phys );
+- 	MALI_DEBUG_ASSERT( 0 == (size & ~_MALI_OSK_CPU_PAGE_MASK) );
+- 	MALI_DEBUG_ASSERT( 0 != size );
++	MALI_DEBUG_ASSERT_POINTER( phys );
++	MALI_DEBUG_ASSERT( 0 == (size & ~_MALI_OSK_CPU_PAGE_MASK) );
++	MALI_DEBUG_ASSERT( 0 != size );
+ 
+ 	/* dma_alloc_* uses a limited region of address space. On most arch/marchs
+ 	 * 2 to 14 MiB is available. This should be enough for the page tables, which
+@@ -372,22 +372,22 @@ mali_io_address _mali_osk_mem_allocioregion( u32 *phys, u32 size )
+ 
+ 	MALI_DEBUG_PRINT(3, ("Page table virt: 0x%x = dma_alloc_coherent(size:%d, phys:0x%x, )\n", virt, size, phys));
+ 
+- 	if ( NULL == virt )
+- 	{
++	if ( NULL == virt )
++	{
+ 		MALI_DEBUG_PRINT(5, ("allocioregion: Failed to allocate Pagetable memory, size=0x%.8X\n", size ));
+- 		return 0;
+- 	}
++		return 0;
++	}
+ 
+ 	MALI_DEBUG_ASSERT( 0 == (*phys & ~_MALI_OSK_CPU_PAGE_MASK) );
+ 
+- 	return (mali_io_address)virt;
++	return (mali_io_address)virt;
+ }
+ 
+ void _mali_osk_mem_freeioregion( u32 phys, u32 size, mali_io_address virt )
+ {
+- 	MALI_DEBUG_ASSERT_POINTER( (void*)virt );
+- 	MALI_DEBUG_ASSERT( 0 != size );
+- 	MALI_DEBUG_ASSERT( 0 == (phys & ( (1 << PAGE_SHIFT) - 1 )) );
++	MALI_DEBUG_ASSERT_POINTER( (void*)virt );
++	MALI_DEBUG_ASSERT( 0 != size );
++	MALI_DEBUG_ASSERT( 0 == (phys & ( (1 << PAGE_SHIFT) - 1 )) );
+ 
+ 	dma_free_writecombine(NULL, size, virt, phys);
+ }
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_mali.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_mali.c
+index 50d6ddf..b21f981 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_mali.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_mali.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_math.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_math.c
+index 3e62e51..b81fa83 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_math.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_math.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_memory.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_memory.c
+index 7bb470f..e83e676 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_memory.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_memory.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_misc.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_misc.c
+index ad486db..e31aee8 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_misc.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_misc.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_notification.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_notification.c
+index c265f88..d27557d 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_notification.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_notification.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_pm.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_pm.c
+index bc19af9..5985c2b 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_pm.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_pm.c
+@@ -1,9 +1,9 @@
+ /**
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_profiling.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_profiling.c
+index 5429329..e88507c 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_profiling.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_profiling.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -122,7 +122,7 @@ _mali_osk_errcode_t _mali_ukk_sw_counters_report(_mali_uk_sw_counters_report_s *
+  *
+  * @param counter_id The counter ID.
+  * @param event_id Event ID that the counter should count (HW counter value from TRM).
+- * 
++ *
+  * @return 1 on success, 0 on failure.
+  */
+ int _mali_profiling_set_event(u32 counter_id, s32 event_id)
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_specific.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_specific.h
+index 15d98e0..d7b0d89 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_specific.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_specific.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_timers.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_timers.c
+index 0e28b32..7cb1de7 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_timers.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_timers.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wait_queue.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wait_queue.c
+index ce0561d..f992f81 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wait_queue.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wait_queue.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wq.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wq.c
+index 23f5720..77babb3 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wq.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_osk_wq.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -121,4 +121,3 @@ static void _mali_osk_wq_work_func ( struct work_struct *work )
+ 	work_object = _MALI_OSK_CONTAINER_OF(work, mali_osk_wq_work_object_t, work_handle);
+ 	work_object->handler(work_object->data);
+ }
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_pmu_power_up_down.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_pmu_power_up_down.c
+index 05dc291..70a01dd 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_pmu_power_up_down.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_pmu_power_up_down.c
+@@ -1,9 +1,9 @@
+ /**
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_events.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_events.h
+index 2639a40..8785614 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_events.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_events.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_gator_api.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_gator_api.h
+index c111cfd..61e074b 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_gator_api.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_gator_api.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.c
+index e40a800..c5c2af0 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.h
+index 092b9b0..558838b 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_profiling_internal.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.c
+index 6293610..bf6fcd5 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.h
+index 4415ec6..a893605 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_sync.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_sync_user.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_sync_user.c
+index 7f0fddfc..cbd3468 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_sync_user.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_sync_user.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_uk_types.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_uk_types.h
+index fbe902a..8c2bd25 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_uk_types.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_uk_types.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_core.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_core.c
+index 1768ff2..9c4b086 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_core.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_core.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_gp.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_gp.c
+index 4ee4a81..b07456f 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_gp.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_gp.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_mem.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_mem.c
+index 7d1d23d..02204d0 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_mem.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_mem.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -131,7 +131,7 @@ int mem_map_ext_wrapper(struct mali_session_data *session_data, _mali_uk_map_ext
+         if (_MALI_OSK_ERR_OK == err_code)
+         {
+             /* Rollback */
+-           	_mali_uk_unmap_external_mem_s uk_args_unmap;
++		_mali_uk_unmap_external_mem_s uk_args_unmap;
+ 
+             uk_args_unmap.ctx = session_data;
+             uk_args_unmap.cookie = uk_args.cookie;
+@@ -216,7 +216,7 @@ int mem_attach_ump_wrapper(struct mali_session_data *session_data, _mali_uk_atta
+         if (_MALI_OSK_ERR_OK == err_code)
+         {
+             /* Rollback */
+-           	_mali_uk_release_ump_mem_s uk_args_unmap;
++		_mali_uk_release_ump_mem_s uk_args_unmap;
+ 
+             uk_args_unmap.ctx = session_data;
+             uk_args_unmap.cookie = uk_args.cookie;
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_pp.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_pp.c
+index 6663e7f..b881842 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_pp.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_pp.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_profiling.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_profiling.c
+index f4e31c9..4e6c745 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_profiling.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_profiling.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -179,5 +179,3 @@ int profiling_report_sw_counters_wrapper(struct mali_session_data *session_data,
+ 
+ 	return 0;
+ }
+-
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_vsync.c b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_vsync.c
+index f9b5a3e..87d5aaf 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_vsync.c
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_vsync.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2011-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -38,4 +38,3 @@ int vsync_event_report_wrapper(struct mali_session_data *session_data, _mali_uk_
+ 
+ 	return 0;
+ }
+-
+diff --git a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_wrappers.h b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_wrappers.h
+index 08bdae4..d0db333 100644
+--- a/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_wrappers.h
++++ b/drivers/gpu/mali400/r3p2/mali/linux/mali_ukk_wrappers.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/mali/platform/pegasus-m400/exynos4_pmm.c b/drivers/gpu/mali400/r3p2/mali/platform/pegasus-m400/exynos4_pmm.c
+index 346ad7f..16ebb9f 100644
+--- a/drivers/gpu/mali400/r3p2/mali/platform/pegasus-m400/exynos4_pmm.c
++++ b/drivers/gpu/mali400/r3p2/mali/platform/pegasus-m400/exynos4_pmm.c
+@@ -38,7 +38,7 @@
+ #include <linux/workqueue.h>
+ 
+ #ifdef CONFIG_CPU_EXYNOS4210
+-#define MALI_DVFS_STEPS 2
++#define MALI_DVFS_STEPS 4
+ #define MALI_DVFS_WATING 10 /* msec */
+ #define MALI_DVFS_DEFAULT_STEP 0
+ #else
+@@ -81,13 +81,28 @@
+ mali_dvfs_status_t maliDvfsStatus;
+ int mali_dvfs_control;
+ 
++int step0_clk = 100;
++int step0_vol = 850000;
++int step1_clk = 160;
++int step1_vol = 900000;
++int step0_up = 90;
++int step1_down = 60;
++int step2_clk = 200;
++int step2_vol = 950000;
++int step1_up = 90;
++int step2_down = 75;
++int step3_clk = 267;
++int step3_vol = 950000;
++int step2_up = 90;
++int step3_down = 70;
++
+ typedef struct mali_runtime_resumeTag{
+ 	int clk;
+ 	int vol;
+ 	unsigned int step;
+ }mali_runtime_resume_table;
+ 
+-mali_runtime_resume_table mali_runtime_resume = {266, 900000, 1};
++mali_runtime_resume_table mali_runtime_resume = {266, 950000, 1};
+ 
+ /* dvfs table */
+ mali_dvfs_table mali_dvfs[MALI_DVFS_STEPS]={
+@@ -98,8 +113,10 @@
+ 			/* step 3 */{440  ,1000000	,1025000   ,85   , 90},
+ 			/* step 4 */{533  ,1000000	,1075000   ,95   ,100} };
+ #else
+-			/* step 0 */{134  ,1000000	, 950000   ,85   , 90},
+-			/* step 1 */{267  ,1000000	,1050000   ,85   ,100} };
++			/* step 0 */{100  ,1000000	, 850000   ,85   , 90},
++			/* step 1 */{160  ,1000000	, 900000   ,60   , 90},
++			/* step 1 */{200  ,1000000	, 950000   ,75   , 90},
++			/* step 1 */{267  ,1000000	, 950000   ,70   ,100}};
+ #endif
+ 
+ #ifdef EXYNOS4_ASV_ENABLED
+@@ -167,16 +184,28 @@
+ #else
+ 
+ static unsigned int asv_3d_volt_4210_12_table[MALI_DVFS_STEPS][ASV_LEVEL_4210_12] = {
+-	{  1000000,  1000000,  1000000,   950000,   950000,   950000,   950000,   950000},	/* L1(134Mhz) */
++	{  1150000,  1100000,  1050000,   1000000,   950000,   900000,   850000,   800000},	/* L3(134Mhz) */
+ #if (MALI_DVFS_STEPS > 1)
+-	{  1100000,  1100000,  1100000,  1000000,  1000000,  1000000,  1000000,   950000},	/* L0(266Mhz) */
++	{  1150000,  1100000,  1050000,   1000000,   950000,   900000,   850000,   800000},	/* L2(160Mhz) */
++#if (MALI_DVFS_STEPS > 2)
++	{  1150000,  1100000,  1050000,   1000000,   950000,   900000,   850000,   800000},	/* L1(200Mhz) */
++#if (MALI_DVFS_STEPS > 3)
++	{  1150000,  1100000,  1050000,   1000000,   950000,   900000,   850000,   800000},	/* L0(266Mhz) */
++#endif
++#endif
+ #endif
+ };
+ 
+ static unsigned int asv_3d_volt_4210_14_table[MALI_DVFS_STEPS][ASV_LEVEL_4210_14] = {
+-	{  1000000,  1000000,   950000,   950000,   950000},	/* L1(134Mhz) */
++	{  1000000,  950000,   900000,   850000,   800000},	/* L3(134Mhz) */
+ #if (MALI_DVFS_STEPS > 1)
+-	{  1100000,  1100000,  1000000,  1000000,   950000},	/* L0(266Mhz) */
++	{  1000000,  950000,   900000,   850000,   800000},	/* L2(160Mhz) */
++#if (MALI_DVFS_STEPS > 2)
++	{  1050000,  1000000,  950000,   900000,   850000},	/* L1(200Mhz) */
++#if (MALI_DVFS_STEPS > 3)
++	{  1100000,  1050000,  1000000,  950000,   900000},	/* L0(266Mhz) */
++#endif
++#endif
+ #endif
+ };
+ #endif
+@@ -213,7 +242,7 @@
+ /* Orion */
+ static const mali_bool bis_vpll = MALI_FALSE;
+ int mali_gpu_clk = 267;
+-int mali_gpu_vol = 1050000;
++int mali_gpu_vol = 950000;
+ #endif
+ 
+ static unsigned int GPU_MHZ	= 1000000;
+@@ -299,7 +328,7 @@ void mali_regulator_set_voltage(int min_uV, int max_uV)
+ 		_mali_osk_lock_signal(mali_dvfs_lock, _MALI_OSK_LOCKMODE_RW);
+ 		return;
+ 	}
+-	MALI_PRINT(("= regulator_set_voltage: %d, %d \n",min_uV, max_uV));
++	MALI_DEBUG_PRINT(1, ("= regulator_set_voltage: %d, %d \n",min_uV, max_uV));
+ 	regulator_set_voltage(g3d_regulator, min_uV, max_uV);
+ 	mali_gpu_vol = regulator_get_voltage(g3d_regulator);
+ 	MALI_DEBUG_PRINT(1, ("Mali voltage: %d\n", mali_gpu_vol));
+@@ -475,10 +504,10 @@ void mali_clk_set_rate(unsigned int clk, unsigned int mhz)
+ 	MALI_DEBUG_PRINT(3, ("Mali platform: Setting frequency to %d mhz\n", clk));
+ 
+ 	if (mali_clk_get() == MALI_FALSE) {
+-  	_mali_osk_lock_signal(mali_dvfs_lock, _MALI_OSK_LOCKMODE_RW);
+- 		return;
++	_mali_osk_lock_signal(mali_dvfs_lock, _MALI_OSK_LOCKMODE_RW);
++		return;
+ 	}
+-	
++
+ 	if (bis_vpll)
+ 	{
+ 		clk_set_rate(fout_vpll_clock, (unsigned int)clk * GPU_MHZ);
+@@ -497,7 +526,7 @@ void mali_clk_set_rate(unsigned int clk, unsigned int mhz)
+ 	if (atomic_read(&clk_active) == 0) {
+ 		if (clk_enable(mali_clock) < 0) {
+ 			_mali_osk_lock_signal(mali_dvfs_lock, _MALI_OSK_LOCKMODE_RW);
+- 			return;
++			return;
+ 		}
+ 		atomic_set(&clk_active, 1);
+ 	}
+@@ -508,7 +537,7 @@ void mali_clk_set_rate(unsigned int clk, unsigned int mhz)
+ 
+ 	rate = mali_clk_get_rate();
+ 
+-	MALI_PRINT(("Mali frequency %d\n", rate / mhz));
++	MALI_DEBUG_PRINT(1, ("Mali frequency %d\n", rate / mhz));
+ 	GPU_MHZ = mhz;
+ 	mali_gpu_clk = (int)(rate / mhz);
+ 
+@@ -874,6 +903,52 @@ int mali_dvfs_is_running(void)
+ 
+ static void mali_dvfs_work_handler(struct work_struct *w)
+ {
++	    if (step0_clk != mali_dvfs[0].clock) {
++                MALI_PRINT(("::: step0_clk change to %d Mhz\n", step0_clk));
++                mali_dvfs[0].clock = step0_clk;
++        }
++        if (step1_clk != mali_dvfs[1].clock) {
++                MALI_PRINT(("::: step1_clk change to %d Mhz\n", step1_clk));
++                mali_dvfs[1].clock = step1_clk;
++        }
++        if (step0_up != mali_dvfs[0].upthreshold) {
++                MALI_PRINT(("::: step0_up change to %d %\n", step0_up));
++                mali_dvfs[0].upthreshold = step0_up;
++        }
++        if (step1_down != mali_dvfs[1].downthreshold) {
++                MALI_PRINT((":::step1_down change to %d %\n", step1_down));
++                mali_dvfs[1].downthreshold = step1_down;
++        }
++        if (step2_clk != mali_dvfs[2].clock) {
++                MALI_PRINT(("::: step2_clk change to %d Mhz\n", step2_clk));
++                mali_dvfs[2].clock = step2_clk;
++        }
++        if (step1_up != mali_dvfs[1].upthreshold) {
++                MALI_PRINT((":::step1_up change to %d %\n", step1_up));
++                mali_dvfs[1].upthreshold = step1_up;
++        }
++        if (step2_down != mali_dvfs[2].downthreshold) {
++                MALI_PRINT((":::step2_down change to %d %\n", step2_down));
++                mali_dvfs[2].downthreshold = step2_down;
++        }
++        if (step3_clk != mali_dvfs[3].clock) {
++                MALI_PRINT(("::: step3_clk change to %d Mhz\n", step3_clk));
++                mali_dvfs[3].clock = step3_clk;
++        }
++        if (step2_up != mali_dvfs[2].upthreshold) {
++                MALI_PRINT((":::step2_up change to %d %\n", step2_up));
++                mali_dvfs[2].upthreshold = step2_up;
++        }
++        if (step3_down != mali_dvfs[3].downthreshold) {
++                MALI_PRINT((":::step3_down change to %d %\n", step3_down));
++                mali_dvfs[3].downthreshold = step3_down;
++        }
++
++    mali_dvfs[0].vol = step0_vol;
++    mali_dvfs[1].vol = step1_vol;
++    mali_dvfs[2].vol = step2_vol;
++    mali_dvfs[3].vol = step3_vol;
++
+ 	bMaliDvfsRun=1;
+ 
+ 	MALI_DEBUG_PRINT(3, ("=== mali_dvfs_work_handler\n"));
+@@ -1258,7 +1333,7 @@ int mali_dvfs_bottom_lock_pop(void)
+ 	if (prev_status <= 0) {
+ 		MALI_PRINT(("gpu bottom lock status is not valid for pop\n"));
+ 		return -1;
+-	} else if (prev_status == 1) {
++	} else if (prev_status >= 1) {
+ 		bottom_lock_step = 0;
+ 		MALI_PRINT(("gpu bottom lock release\n"));
+ 	}
+diff --git a/drivers/gpu/mali400/r3p2/ump/Kbuild b/drivers/gpu/mali400/r3p2/ump/Kbuild
+index 4ca1aae..98662db 100644
+--- a/drivers/gpu/mali400/r3p2/ump/Kbuild
++++ b/drivers/gpu/mali400/r3p2/ump/Kbuild
+@@ -1,9 +1,9 @@
+ #
+ # Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+-# 
++#
+ # This program is free software and is provided to you under the terms of the GNU General Public License version 2
+ # as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+-# 
++#
+ # A copy of the licence is included with the program, and can also be obtained from Free Software
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ #
+@@ -75,4 +75,3 @@ ump-y = common/ump_kernel_common.o \
+ 
+ # MALI_SEC
+ obj-$(CONFIG_MALI400_UMP) := ump.o
+-
+diff --git a/drivers/gpu/mali400/r3p2/ump/Kconfig b/drivers/gpu/mali400/r3p2/ump/Kconfig
+index 13785e2..02a889a 100644
+--- a/drivers/gpu/mali400/r3p2/ump/Kconfig
++++ b/drivers/gpu/mali400/r3p2/ump/Kconfig
+@@ -4,4 +4,3 @@ config UMP_DEBUG
+ 	default n
+ 	---help---
+ 	  This enabled extra debug checks and messages in UMP.
+-
+diff --git a/drivers/gpu/mali400/r3p2/ump/Makefile b/drivers/gpu/mali400/r3p2/ump/Makefile
+index e2aa8e5..6218314 100644
+--- a/drivers/gpu/mali400/r3p2/ump/Makefile
++++ b/drivers/gpu/mali400/r3p2/ump/Makefile
+@@ -1,9 +1,9 @@
+ #
+ # Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+-# 
++#
+ # This program is free software and is provided to you under the terms of the GNU General Public License version 2
+ # as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+-# 
++#
+ # A copy of the licence is included with the program, and can also be obtained from Free Software
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ #
+diff --git a/drivers/gpu/mali400/r3p2/ump/Makefile.common b/drivers/gpu/mali400/r3p2/ump/Makefile.common
+index c6aa633..8ce5a5c 100644
+--- a/drivers/gpu/mali400/r3p2/ump/Makefile.common
++++ b/drivers/gpu/mali400/r3p2/ump/Makefile.common
+@@ -1,9 +1,9 @@
+ #
+ # Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+-# 
++#
+ # This program is free software and is provided to you under the terms of the GNU General Public License version 2
+ # as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+-# 
++#
+ # A copy of the licence is included with the program, and can also be obtained from Free Software
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ #
+diff --git a/drivers/gpu/mali400/r3p2/ump/arch/config.h b/drivers/gpu/mali400/r3p2/ump/arch/config.h
+index 7afbca6..688edc9 100644
+--- a/drivers/gpu/mali400/r3p2/ump/arch/config.h
++++ b/drivers/gpu/mali400/r3p2/ump/arch/config.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -11,12 +11,12 @@
+ #ifndef __ARCH_CONFIG_UMP_H__
+ #define __ARCH_CONFIG_UMP_H__
+ 
+-#define ARCH_UMP_BACKEND_DEFAULT          	USING_MEMORY
++#define ARCH_UMP_BACKEND_DEFAULT		USING_MEMORY
+ #if (USING_MEMORY == 0) /* Dedicated Memory */
+-#define ARCH_UMP_MEMORY_ADDRESS_DEFAULT   	0x2C000000
++#define ARCH_UMP_MEMORY_ADDRESS_DEFAULT		0x2C000000
+ #else
+-#define ARCH_UMP_MEMORY_ADDRESS_DEFAULT   	0
++#define ARCH_UMP_MEMORY_ADDRESS_DEFAULT		0
+ #endif
+ 
+-#define ARCH_UMP_MEMORY_SIZE_DEFAULT 		UMP_MEM_SIZE*1024*1024
++#define ARCH_UMP_MEMORY_SIZE_DEFAULT		UMP_MEM_SIZE*1024*1024
+ #endif /* __ARCH_CONFIG_UMP_H__ */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_api.c b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_api.c
+index 013f4c6..964a978 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_api.c
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_api.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -278,7 +278,7 @@ _mali_osk_errcode_t _ump_ukk_release( _ump_uk_release_s *release_info )
+ 	}
+ 
+ 	_mali_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+- 	DBG_MSG_IF(1, _MALI_OSK_ERR_OK != ret, ("UMP memory with ID %u does not belong to this session.\n", secure_id));
++	DBG_MSG_IF(1, _MALI_OSK_ERR_OK != ret, ("UMP memory with ID %u does not belong to this session.\n", secure_id));
+ 
+ 	DBG_MSG(4, ("_ump_ukk_release() returning 0x%x\n", ret));
+ 	return ret;
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.c b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.c
+index 306ea3d..92ad5cb 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.c
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.h b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.h
+index 6e3a2e9..03d213d 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.h
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_common.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.c b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.c
+index 2531f80..5cd34b5 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.c
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -65,9 +65,9 @@ void ump_descriptor_mapping_destroy(ump_descriptor_mapping * map)
+ 
+ int ump_descriptor_mapping_allocate_mapping(ump_descriptor_mapping * map, void * target)
+ {
+- 	int descriptor = -1;/*-EFAULT;*/
+- 	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RW);
+- 	descriptor = _mali_osk_find_first_zero_bit(map->table->usage, map->current_nr_mappings);
++	int descriptor = -1;/*-EFAULT;*/
++	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RW);
++	descriptor = _mali_osk_find_first_zero_bit(map->table->usage, map->current_nr_mappings);
+ 	if (descriptor == map->current_nr_mappings)
+ 	{
+ 		int nr_mappings_new;
+@@ -89,8 +89,8 @@ int ump_descriptor_mapping_allocate_mapping(ump_descriptor_mapping * map, void *
+ 			goto unlock_and_exit;
+ 		}
+ 
+- 		_mali_osk_memcpy(new_table->usage, old_table->usage, (sizeof(unsigned long)*map->current_nr_mappings) / BITS_PER_LONG);
+- 		_mali_osk_memcpy(new_table->mappings, old_table->mappings, map->current_nr_mappings * sizeof(void*));
++		_mali_osk_memcpy(new_table->usage, old_table->usage, (sizeof(unsigned long)*map->current_nr_mappings) / BITS_PER_LONG);
++		_mali_osk_memcpy(new_table->mappings, old_table->mappings, map->current_nr_mappings * sizeof(void*));
+ 		map->table = new_table;
+ 		map->current_nr_mappings = nr_mappings_new;
+ 		descriptor_table_free(old_table);
+@@ -107,10 +107,10 @@ int ump_descriptor_mapping_allocate_mapping(ump_descriptor_mapping * map, void *
+ 
+ int ump_descriptor_mapping_get(ump_descriptor_mapping * map, int descriptor, void** target)
+ {
+- 	int result = -1;/*-EFAULT;*/
+- 	DEBUG_ASSERT(map);
+- 	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RO);
+- 	if ( (descriptor >= 0) && (descriptor < map->current_nr_mappings) && _mali_osk_test_bit(descriptor, map->table->usage) )
++	int result = -1;/*-EFAULT;*/
++	DEBUG_ASSERT(map);
++	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RO);
++	if ( (descriptor >= 0) && (descriptor < map->current_nr_mappings) && _mali_osk_test_bit(descriptor, map->table->usage) )
+ 	{
+ 		*target = map->table->mappings[descriptor];
+ 		result = 0;
+@@ -122,9 +122,9 @@ int ump_descriptor_mapping_get(ump_descriptor_mapping * map, int descriptor, voi
+ 
+ int ump_descriptor_mapping_set(ump_descriptor_mapping * map, int descriptor, void * target)
+ {
+- 	int result = -1;/*-EFAULT;*/
+- 	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RO);
+- 	if ( (descriptor >= 0) && (descriptor < map->current_nr_mappings) && _mali_osk_test_bit(descriptor, map->table->usage) )
++	int result = -1;/*-EFAULT;*/
++	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RO);
++	if ( (descriptor >= 0) && (descriptor < map->current_nr_mappings) && _mali_osk_test_bit(descriptor, map->table->usage) )
+ 	{
+ 		map->table->mappings[descriptor] = target;
+ 		result = 0;
+@@ -135,8 +135,8 @@ int ump_descriptor_mapping_set(ump_descriptor_mapping * map, int descriptor, voi
+ 
+ void ump_descriptor_mapping_free(ump_descriptor_mapping * map, int descriptor)
+ {
+- 	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RW);
+- 	if ( (descriptor >= 0) && (descriptor < map->current_nr_mappings) && _mali_osk_test_bit(descriptor, map->table->usage) )
++	_mali_osk_lock_wait(map->lock, _MALI_OSK_LOCKMODE_RW);
++	if ( (descriptor >= 0) && (descriptor < map->current_nr_mappings) && _mali_osk_test_bit(descriptor, map->table->usage) )
+ 	{
+ 		map->table->mappings[descriptor] = NULL;
+ 		_mali_osk_clear_nonatomic_bit(descriptor, map->table->usage);
+@@ -163,4 +163,3 @@ static void descriptor_table_free(ump_descriptor_table * table)
+ {
+ 	_mali_osk_free(table);
+ }
+-
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.h b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.h
+index 92bbe54..06543ee 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.h
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_descriptor_mapping.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_memory_backend.h b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_memory_backend.h
+index 8b11452..68cdde4 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_memory_backend.h
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_memory_backend.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -50,4 +50,3 @@
+ void ump_memory_backend_destroy( void );
+ 
+ #endif /*__UMP_KERNEL_MEMORY_BACKEND_H__ */
+-
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_ref_drv.c b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_ref_drv.c
+index 6335bf6..e0d4c56 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_ref_drv.c
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_ref_drv.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_types.h b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_types.h
+index 19a9755..fdacd86 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_types.h
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_kernel_types.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_osk.h b/drivers/gpu/mali400/r3p2/ump/common/ump_osk.h
+index d9d182a..87befb4 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_osk.h
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_osk.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/common/ump_ukk.h b/drivers/gpu/mali400/r3p2/ump/common/ump_ukk.h
+index 56e4be3..4e6bb86 100644
+--- a/drivers/gpu/mali400/r3p2/ump/common/ump_ukk.h
++++ b/drivers/gpu/mali400/r3p2/ump/common/ump_ukk.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface.h b/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface.h
+index 042c8b1..f84d237 100644
+--- a/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface.h
++++ b/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface_ref_drv.h b/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface_ref_drv.h
+index b253de5..36c5c9d 100644
+--- a/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface_ref_drv.h
++++ b/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_interface_ref_drv.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_platform.h b/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_platform.h
+index 4349605..339e967 100644
+--- a/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_platform.h
++++ b/drivers/gpu/mali400/r3p2/ump/include/ump_kernel_platform.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_ioctl.h b/drivers/gpu/mali400/r3p2/ump/linux/ump_ioctl.h
+index dcc343a..1747a90 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_ioctl.h
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_ioctl.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.c
+index b509f43..4c44bf8 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.h b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.h
+index 4985bb7..f67275e 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.h
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_linux.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.c
+index f42a320..3f0f99c 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.h b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.h
+index fa4bdcc..5668e86 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.h
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_dedicated.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -20,4 +20,3 @@
+ ump_memory_backend * ump_block_allocator_create(u32 base_address, u32 size);
+ 
+ #endif /* __UMP_KERNEL_MEMORY_BACKEND_DEDICATED_H__ */
+-
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.c
+index 0cee2c8..1c376b8 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.h b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.h
+index f924705..721a884 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.h
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_kernel_memory_backend_os.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+@@ -20,4 +20,3 @@
+ ump_memory_backend * ump_os_memory_backend_create(const int max_allocation);
+ 
+ #endif /* __UMP_KERNEL_MEMORY_BACKEND_OS_H__ */
+-
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_memory_backend.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_memory_backend.c
+index fd1f555..c42d5a8 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_memory_backend.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_memory_backend.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_atomics.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_atomics.c
+index ef1902e..87d1f31 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_atomics.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_atomics.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_low_level_mem.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_low_level_mem.c
+index 9635014..849a3b4 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_low_level_mem.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_low_level_mem.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_misc.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_misc.c
+index 12066eb..aeed946 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_misc.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_osk_misc.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.c
+index 977db9a..4cec0f7 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.h b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.h
+index 63ee98c..1ae6639 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.h
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_ref_wrappers.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.c b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.c
+index 780f311..e5c5903 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.c
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.c
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+diff --git a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.h b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.h
+index e87a903..1cbacf7 100644
+--- a/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.h
++++ b/drivers/gpu/mali400/r3p2/ump/linux/ump_ukk_wrappers.h
+@@ -1,9 +1,9 @@
+ /*
+  * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+- * 
++ *
+  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
+- * 
++ *
+  * A copy of the licence is included with the program, and can also be obtained from Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  */
+-- 
+1.8.5.1
