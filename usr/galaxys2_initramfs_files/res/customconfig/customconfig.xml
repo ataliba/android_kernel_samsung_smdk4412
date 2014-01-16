@@ -12,7 +12,6 @@ name="CPU Scaling Settings">
 <spinnerItem name="conservative" value="conservative"/>
 <spinnerItem name="userspace" value="userspace"/>
 <spinnerItem name="ondemand" value="ondemand"/>
-<spinnerItem name="interactive" value="interactive"/>
 <spinnerItem name="powersave" value="powersave"/>
 <spinnerItem name="performance" value="performance"/>
 </spinner>
@@ -52,11 +51,6 @@ name="CPU Voltage 200 MHz" action="cpu-voltage 6" unit="mV" min="850" reversed="
 <checkbox description="Disabling GENTLE_FAIR_SLEEPERS may give you better UI responsiveness." name="GENTLE_FAIR_SLEEPERS" action="schedfeat GENTLE_FAIR_SLEEPERS" label="GENTLE_FAIR_SLEEPERS"/>
 <checkbox description="Using ARCH_POWER enables the use of arm topology power functions instead of generic ones." name="ARCH_POWER" action="schedfeat ARCH_POWER" label="ARCH_POWER"/>
 </settingsPane>
-<settingsPane description="These settings control ZRAM (compressed memory). Keep in mind that zram gives you 'more' memory at the cost of CPU cycles, which means less battery. A restart is recommended when changing ZRAM settings. " name="ZRAM Settings">
-<seekBar description="To turn ZRAM off set this to 0."
-name="ZRAM Size" action="zram_size" unit="MB" min="0" reversed="false" step="64" max="512"/>
-<checkbox description="This will make ZRAM behave like a swap partition. Run 'cat /proc/meminfo' to check current swap size. Don't disable this if your memory is almost full, free some memory before disabling." name="SWAP ON ZRAM" action="swap" label="SWAP ON ZRAM"/>
-</settingsPane>
 <settingsPane description="These settings control misc kernel and ROM tweaks." name="MISC tweaks">
 <seekBar description="This controls vibration level. If you are using CM11 use the ROM vibration control. Default is 50%. Warning: levels above 75% might be dangerous." name="Vibration Level" action="generic /sys/class/timed_output/vibrator/pwm_value" unit="%" min="0" reversed="false" step="1" max="100"/>
 <spinner description="Set GPS tweaks based on your location. You can also copy your custom GPS configuration to /data/gps.conf then set to Off/Custom, your custom configuration will be applied at every boot and will survive rom flashing." name="GPS Tweaks" action="gps">
@@ -73,6 +67,14 @@ name="ZRAM Size" action="zram_size" unit="MB" min="0" reversed="false" step="64"
 <spinnerItem name="Enforce" value="1"/>
 </spinner>
 <checkbox description="Enable or Disable Navigation Bar (needs restart)" name="Navigation Bar" action="navigationbar" label="Navigation Bar"/>
+</settingsPane>
+</settingsTab>
+<settingsTab name="Memory Settings">
+<settingsPane description="These settings control memory settings. Keep in mind that these settings give you 'more' memory at the cost of CPU cycles, which means less battery. A restart is recommended when changing memory settings. " name="Memory Settings">
+<seekBar description="To turn ZRAM off set this to 0."
+name="ZRAM Size" action="zram_size" unit="MB" min="0" reversed="false" step="32" max="384"/>
+<checkbox description="This will make ZRAM behave like a swap partition. Run 'cat /proc/meminfo' to check current swap size. Don't disable this if your memory is almost full, free some memory before disabling." name="SWAP ON ZRAM" action="swap" label="SWAP ON ZRAM"/>
+<checkbox description="This will enable Kernel Same-page Merging. KSM is a kernel thread that runs in the background and compares pages in memory, if two pages are found to be the same, the KSM thread merges them back as a single copy-on-write page of memory, thus freeing memory." name="KSM" action="ksm" label="KSM"/>
 </settingsPane>
 </settingsTab>
 <settingsTab name="Screen">

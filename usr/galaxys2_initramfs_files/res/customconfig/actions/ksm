@@ -1,0 +1,20 @@
+#!/system/bin/sh
+
+if [ "a$2" != "a" ];then
+  ksm=$2
+fi
+
+mount -o remount,rw /
+
+case "${ksm}" in
+  on)
+    echo "1" > /sys/kernel/mm/ksm/run
+    ;;
+  off)
+    echo "0" > /sys/kernel/mm/ksm/run
+    ;;
+esac;
+
+mount -o remount,ro /
+
+echo $ksm

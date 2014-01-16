@@ -82,10 +82,9 @@ setprop net.dns2 8.8.4.4
 # make sure dynamic fsync is active
 echo "1" > /sys/kernel/dyn_fsync/Dyn_fsync_active
 
-# enable ksm at boot
+# set recommended KSM settings by google
 echo "100" > /sys/kernel/mm/ksm/pages_to_scan
 echo "500" > /sys/kernel/mm/ksm/sleep_millisecs
-echo "1" > /sys/kernel/mm/ksm/run
 
 sysctl -w vm.dirty_background_ratio=10;
 sysctl -w vm.dirty_ratio=20;

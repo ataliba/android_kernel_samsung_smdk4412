@@ -12,6 +12,7 @@ GENTLE_FAIR_SLEEPERS=off
 ARCH_POWER=on
 zram_size=0
 swap=off
+ksm=off
 pwm_value=50
 gps=0
 selinux=0

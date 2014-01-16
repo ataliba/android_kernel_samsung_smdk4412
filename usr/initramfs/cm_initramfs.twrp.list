@@ -55,6 +55,7 @@ file /res/customconfig/actions/zram_size  /home/gustavo/kernel/usr/galaxys2_init
 file /res/customconfig/actions/swap  /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/swap 755 0 0
 file /res/customconfig/actions/cpu_boost  /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/cpu_boost 755 0 0
 file /res/customconfig/actions/sharpness  /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/sharpness 755 0 0
+file /res/customconfig/actions/ksm  /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/ksm 755 0 0
 dir /modules 755 0 0
 file /modules/auth_rpcgss.ko /home/gustavo/kernel/usr/galaxys2_initramfs_files/modules/auth_rpcgss.ko 644 0 0
 file /modules/cifs.ko /home/gustavo/kernel/usr/galaxys2_initramfs_files/modules/cifs.ko 644 0 0
