@@ -320,11 +320,11 @@
  */
 
 // ZZ: midnight and zzmoove default values
-#define DEF_FREQUENCY_UP_THRESHOLD		  (70)
-#define DEF_FREQUENCY_UP_THRESHOLD_HOTPLUG	  (68)	// ZZ: default for hotplug up threshold for all cpus (cpu0 stays allways on)
+#define DEF_FREQUENCY_UP_THRESHOLD		  (85)
+#define DEF_FREQUENCY_UP_THRESHOLD_HOTPLUG	  (85)	// ZZ: default for hotplug up threshold for all cpus (cpu0 stays allways on)
 #define DEF_FREQUENCY_UP_THRESHOLD_HOTPLUG_FREQ   (0)	// Yank: default for hotplug up threshold frequency for all cpus (0 = disabled)
-#define DEF_FREQUENCY_DOWN_THRESHOLD		  (52)
-#define DEF_FREQUENCY_DOWN_THRESHOLD_HOTPLUG	  (55)	// ZZ: default for hotplug down threshold for all cpus (cpu0 stays allways on)
+#define DEF_FREQUENCY_DOWN_THRESHOLD		  (80)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_HOTPLUG	  (60)	// ZZ: default for hotplug down threshold for all cpus (cpu0 stays allways on)
 #define DEF_FREQUENCY_DOWN_THRESHOLD_HOTPLUG_FREQ (0)	// Yank: default for hotplug down threshold frequency for all cpus (0 = disabled)
 #define DEF_IGNORE_NICE				  (0)	// ZZ: default for ignore nice load
 #define DEF_FREQ_STEP				  (5)	// ZZ: default for freq step at awake
@@ -454,8 +454,8 @@ static unsigned int disable_hotplug_asleep;		// ZZ: for setting hotplug on/off o
 // ZZ: midnight and zzmoove defaults for suspend
 #define DEF_SAMPLING_RATE_SLEEP_MULTIPLIER	(2)	// ZZ: default for tuneable sampling_rate_sleep_multiplier
 #define MAX_SAMPLING_RATE_SLEEP_MULTIPLIER	(4)	// ZZ: maximum for tuneable sampling_rate_sleep_multiplier
-#define DEF_UP_THRESHOLD_SLEEP			(90)	// ZZ: default for tuneable up_threshold_sleep
-#define DEF_DOWN_THRESHOLD_SLEEP		(44)	// ZZ: default for tuneable down_threshold_sleep
+#define DEF_UP_THRESHOLD_SLEEP			(95)	// ZZ: default for tuneable up_threshold_sleep
+#define DEF_DOWN_THRESHOLD_SLEEP		(85)	// ZZ: default for tuneable down_threshold_sleep
 #define DEF_SMOOTH_UP_SLEEP			(100)	// ZZ: default for tuneable smooth_up_sleep
 
 /*
@@ -472,7 +472,7 @@ static unsigned int disable_hotplug_asleep;		// ZZ: for setting hotplug on/off o
 */
 
 #define DEF_FREQ_LIMIT				(0)	// ZZ: default for tuneable freq_limit
-#define DEF_FREQ_LIMIT_SLEEP			(0)	// ZZ: default for tuneable freq_limit_sleep
+#define DEF_FREQ_LIMIT_SLEEP			(500000)	// ZZ: default for tuneable freq_limit_sleep
 
 /*
 * ZZ: Fast Scaling: 0 do not activate fast scaling function
