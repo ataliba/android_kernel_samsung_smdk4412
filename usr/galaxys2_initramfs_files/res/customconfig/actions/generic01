@@ -1,4 +1,4 @@
-#!/sbin/busybox sh
+#!/system/bin/sh
 
 if [ "a$2" != "a" ];then
 filename=$(basename $2)

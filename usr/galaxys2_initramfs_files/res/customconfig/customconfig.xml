@@ -54,7 +54,7 @@ name="CPU Voltage 200 MHz" action="cpu-voltage 6" unit="mV" min="850" reversed="
 </settingsPane>
 <settingsPane description="These settings control ZRAM (compressed memory). Keep in mind that zram gives you 'more' memory at the cost of CPU cycles, which means less battery. A restart is recommended when changing ZRAM settings. " name="ZRAM Settings">
 <seekBar description="To turn ZRAM off set this to 0."
-name="ZRAM Size" action="zram_size 1" unit="MB" min="0" reversed="false" step="64" max="512"/>
+name="ZRAM Size" action="zram_size" unit="MB" min="0" reversed="false" step="64" max="512"/>
 <checkbox description="This will make ZRAM behave like a swap partition. Run 'cat /proc/meminfo' to check current swap size. Don't disable this if your memory is almost full, free some memory before disabling." name="SWAP ON ZRAM" action="swap" label="SWAP ON ZRAM"/>
 </settingsPane>
 <settingsPane description="These settings control misc kernel and ROM tweaks." name="MISC tweaks">

@@ -75,13 +75,6 @@ chown root.root /system/lib/hw/lights.exynos4.so
 chmod 0664 /system/lib/hw/lights.exynos4.so
 mount -o remount,ro /system
 
-if [ "$boostpulse" == "on" ];then
-echo "800000" > /sys/module/cpu_boost/parameters/input_boost_freq
-echo "800000" > /sys/module/cpu_boost/parameters/sync_threshold
-echo "500" > /sys/module/cpu_boost/parameters/input_boost_ms
-echo "500" > /sys/module/cpu_boost/parameters/boost_ms
-fi
-
 # google dns
 setprop net.dns1 8.8.8.8
 setprop net.dns2 8.8.4.4
@@ -89,9 +82,16 @@ setprop net.dns2 8.8.4.4
 # make sure dynamic fsync is active
 echo "1" > /sys/kernel/dyn_fsync/Dyn_fsync_active
 
+# enable ksm at boot
+echo "100" > /sys/kernel/mm/ksm/pages_to_scan
+echo "500" > /sys/kernel/mm/ksm/sleep_millisecs
+echo "1" > /sys/kernel/mm/ksm/run
+
 sysctl -w vm.dirty_background_ratio=10;
 sysctl -w vm.dirty_ratio=20;
-sysctl -w vm.swappiness=100;
+# low swapiness to use swap only when the system 
+# is under extreme memory pressure
+sysctl -w vm.swappiness=25;
 
 ##### init scripts #####
 /system/bin/sh sh /sbin/ext/run-init-scripts.sh
