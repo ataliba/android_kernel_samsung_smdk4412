@@ -79,9 +79,6 @@ mount -o remount,ro /system
 setprop net.dns1 8.8.8.8
 setprop net.dns2 8.8.4.4
 
-# make sure dynamic fsync is active
-echo "1" > /sys/kernel/dyn_fsync/Dyn_fsync_active
-
 # set recommended KSM settings by google
 echo "100" > /sys/kernel/mm/ksm/pages_to_scan
 echo "500" > /sys/kernel/mm/ksm/sleep_millisecs
