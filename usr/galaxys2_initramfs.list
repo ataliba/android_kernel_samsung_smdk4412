@@ -38,6 +38,7 @@ file /res/customconfig/actions/selinux /home/gustavo/kernel/usr/galaxys2_initram
 file /res/customconfig/actions/chargecurrent /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/chargecurrent 755 0 0
 file /res/customconfig/actions/cpu-voltage /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/cpu-voltage 755 0 0
 file /res/customconfig/actions/generic /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/generic 755 0 0
+file /res/customconfig/actions/generic01 /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/generic01 755 0 0
 file /res/customconfig/actions/navigationbar /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/navigationbar 755 0 0
 file /res/customconfig/actions/reset-fuelgauge /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/reset-fuelgauge 755 0 0
 file /res/customconfig/actions/schedfeat /home/gustavo/kernel/usr/galaxys2_initramfs_files/res/customconfig/actions/schedfeat 755 0 0
