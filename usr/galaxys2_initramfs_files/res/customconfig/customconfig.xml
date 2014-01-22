@@ -155,7 +155,7 @@ name="Speaker Amplifier" action="sound_volume 3" unit="DB" min="-20" reversed="f
 <checkbox description="Selecting this will turn touckey leds on when you touch the screen." name="Leds on with touch" action="generic01 /sys/class/misc/notification/led_on_touch" label="Led on Touch"/>
 <checkbox description="Led fade-in effect. Glitch when touching touchkeys." name="Led Fade-in Effect" action="generic01 /sys/devices/virtual/misc/notification/led_fadein" label="Led Fade-in Effect"/>
 <checkbox description="Led fade-out effect." name="Led Fade-out Effect" action="generic01 /sys/devices/virtual/misc/notification/led_fadeout" label="Led Fade-out Effect"/>
-<spinner description="Led timeout settings." name="led_timeout" action="generic01 /sys/devices/virtual/sec/sec_touchkey/led_timeout">
+<spinner description="Led timeout settings." name="led_timeout" action="generic /sys/devices/virtual/sec/sec_touchkey/led_timeout">
 <spinnerItem name="No timeout" value="0"/>
 <spinnerItem name="1 sec" value="1"/>
 <spinnerItem name="3 sec" value="3"/>
