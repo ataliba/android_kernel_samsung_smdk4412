@@ -97,7 +97,7 @@ name="GPU Threshold 4-DOWN" action="gpu-thresh 4DOWN" unit="%" min="0" reversed=
 </settingsTab>
 <settingsTab name="Screen">
 <settingsPane description="Here you can change mDNIe (Mobile Digital Natural Image Engine) ." name="MDNIE Control">
-<seekBar description="By increasing this you will get warmer colors (good for night), lower values are more colorful. Driver default is 1. Disable sharpness tweaks to use this."
+<seekBar description="By increasing this you will get warmer colors (good for night), lower values are more colorful. Driver default is 1. In CM11 use the ROM screen control in display/advanced display settings. Disable sharpness tweaks to use this."
 name="Mode" action="generic /sys/class/mdnie/mdnie/mode" unit="" min="0" reversed="false" step="1" max="3"/>
 <checkbox description="This enables sharpness tweaks. Stock kernel default is on." name="Sharpness Tweaks" action="sharpness" label="Sharpness Tweaks"/>
 </settingsPane>
