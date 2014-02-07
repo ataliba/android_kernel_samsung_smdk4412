@@ -45,7 +45,6 @@ zram_size=0
 swap=off
 run=off
 read_ahead_kb=128
-Dyn_fsync_active=on
 scheduler=sio
 GENTLE_FAIR_SLEEPERS=off
 ARCH_POWER=on
