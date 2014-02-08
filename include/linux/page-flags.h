@@ -270,10 +270,6 @@ __PAGEFLAG(SlobFree, slob_free)
 PAGEFLAG(WasActive, was_active)
 #endif
 
-#ifdef CONFIG_CLEANCACHE
-PAGEFLAG(WasActive, was_active)
-#endif
-
 /*
  * Private page markings that may be used by the filesystem that owns the page
  * for its own purposes.
