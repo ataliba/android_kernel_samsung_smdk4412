@@ -179,6 +179,7 @@ name="ZRAM Size" action="zram_size" unit="MB" min="0" reversed="false" step="32"
 <settingsTab name="File system">
 <settingsPane description="These settings control FS options." name="FS Settings">
 <seekBar description="Read-ahead buffer size for sdcard. Optimal value varies with sdcard size and file system used. Default is 128KB." name="Read-ahead buffer" action="generic01 /sys/devices/virtual/bdi/179:0/read_ahead_kb" unit="KB" min="128" reversed="false" step="128" max="4096"/>
+<checkbox description="Dynamic FSync is a driver developed by faux123 that uses Android kernel's unique early suspend/resume interface to disable file sync when screen is on and enable it when screen is turned off to flush all outstanding writes and restore file sync operation as normal. Greatly improves I/O speed. " name="Dynamic FSync" action="generic01 /sys/kernel/dyn_fsync/Dyn_fsync_active" label="Dynamic FSync"/>
 <spinner description="This will set the default I/O scheduler. Default I/O scheduler will only be set during early stages of booting (before init.d execution) and can be overriden by later scripts or apps." name="Default I/O Scheduler" action="generic /sys/block/mmcblk0/queue/scheduler">
 <spinnerItem name="bfq" value="bfq"/>
 <spinnerItem name="cfq" value="cfq"/>
